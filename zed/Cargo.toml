@@ -1,0 +1,13 @@
+[package]
+name = "aura-zed"
+version = "0.2.0"
+edition = "2021"
+authors = ["Aura Lang Team <team@aura-lang.org>"]
+description = "Aura Language Extension for Zed"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.2.0"

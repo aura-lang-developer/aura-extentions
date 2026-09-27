@@ -1,0 +1,32 @@
+[
+  {
+    "label": "Aura: Run Active File",
+    "command": "aurac run \"$ZED_FILE\"",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Type Check Active File",
+    "command": "aurac check \"$ZED_FILE\"",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Build Standalone Binary",
+    "command": "aurac build \"$ZED_FILE\" --standalone",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Run Test Suite (auratest)",
+    "command": "auratest",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Format Workspace (aurafmt)",
+    "command": "aurafmt -w .",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  }
+]

@@ -1,0 +1,459 @@
+{
+  "name": "aura-antigravity",
+  "displayName": "Aura Language Support for Antigravity IDE",
+  "description": "First-class language support, rich LSP, snippets, problem matchers, and commands for Aura in Antigravity IDE",
+  "version": "0.1.0",
+  "publisher": "aura-lang",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aura-lang/aura"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Linters",
+    "Snippets",
+    "Formatters",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "aura",
+    "aura-lang",
+    "antigravity",
+    "lsp",
+    "debugger",
+    "compiler",
+    "typescript",
+    "backend",
+    "golang",
+    "csp",
+    "ai"
+  ],
+  "activationEvents": [
+    "onLanguage:aura",
+    "onDebug"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "breakpoints": [
+      {
+        "language": "aura"
+      }
+    ],
+    "languages": [
+      {
+        "id": "aura",
+        "aliases": [
+          "Aura",
+          "aura"
+        ],
+        "extensions": [
+          ".aura"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "aura",
+        "scopeName": "source.aura",
+        "path": "./syntaxes/aura.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "aura",
+        "path": "./snippets/aura.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Aura Language Configuration for Antigravity IDE",
+      "properties": {
+        "aura.server.path": {
+          "type": "string",
+          "default": "auralsp",
+          "description": "Path to the Aura Language Server executable (auralsp or aurac lsp)."
+        },
+        "aura.compiler.path": {
+          "type": "string",
+          "default": "aurac",
+          "description": "Path to the Aura Compiler CLI (aurac)."
+        },
+        "aura.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between Antigravity IDE and the Aura Language Server."
+        },
+        "aura.inlayHints.typeHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inferred type annotations inline for variable declarations (: Int, : String)."
+        },
+        "aura.inlayHints.parameterHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show parameter name hints at function call sites."
+        },
+        "aura.codeLens.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable interactive Code Lens buttons (▶ Run main, references count) in the editor."
+        },
+        "aura.semanticHighlighting.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable high-precision semantic tokens syntax highlighting from Aura LSP."
+        },
+        "aura.test.autoDiscover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically discover and populate Aura tests in the Test Explorer."
+        },
+        "aura.swagger.port": {
+          "type": "number",
+          "default": 8080,
+          "description": "Default HTTP port of running Aura microservice for Swagger / OpenAPI live preview."
+        }
+      }
+    },
+    "taskDefinitions": [
+      {
+        "type": "aura",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Aura CLI command: build, check, test, format"
+          }
+        }
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aura-view-container",
+          "title": "Aura",
+          "icon": "$(zap)"
+        }
+      ]
+    },
+    "views": {
+      "aura-view-container": [
+        {
+          "id": "auraDependencies",
+          "name": "Dependencies (aura.mod)"
+        }
+      ]
+    },
+    "debuggers": [
+      {
+        "type": "aura",
+        "label": "Aura Debugger",
+        "languages": [
+          "aura"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to the Aura (.aura) source file to execute and debug.",
+                "default": "${file}"
+              },
+              "args": {
+                "type": "array",
+                "description": "Command line arguments passed to the program.",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically pause execution at the program entrypoint.",
+                "default": false
+              },
+              "sourceMaps": {
+                "type": "boolean",
+                "description": "Enable high-precision Source Maps V3 for .aura files.",
+                "default": true
+              }
+            }
+          },
+          "attach": {
+            "properties": {
+              "port": {
+                "type": "number",
+                "description": "Port of the running Aura inspector (default 9229).",
+                "default": 9229
+              },
+              "address": {
+                "type": "string",
+                "description": "TCP/IP address of the debug target.",
+                "default": "127.0.0.1"
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "Aura: Debug Active File",
+            "description": "Debug the active Aura file with breakpoints and high-precision source maps in Antigravity IDE",
+            "body": {
+              "type": "aura",
+              "request": "launch",
+              "name": "Debug Aura: ${fileBasename}",
+              "program": "${file}"
+            }
+          },
+          {
+            "label": "Aura: Attach to Process",
+            "description": "Attach debugger to an Aura application running with 'aurac debug'",
+            "body": {
+              "type": "aura",
+              "request": "attach",
+              "name": "Attach to Aura (Port 9229)",
+              "port": 9229
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "aura.showMenu",
+        "title": "Aura: Show Actions Menu",
+        "icon": "$(zap)"
+      },
+      {
+        "command": "aura.runActiveFile",
+        "title": "Aura: Run Active File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "aura.debugActiveFile",
+        "title": "Aura: Debug Active File",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "aura.stepDebugActiveFile",
+        "title": "Aura: Interactive Step Debugger (Terminal)",
+        "icon": "$(debug-step-into)"
+      },
+      {
+        "command": "aura.buildActiveFile",
+        "title": "Aura: Build Standalone Binary"
+      },
+      {
+        "command": "aura.checkActiveFile",
+        "title": "Aura: Type Check Active File"
+      },
+      {
+        "command": "aura.runTests",
+        "title": "Aura: Run Test Suite (auratest)",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "aura.formatFile",
+        "title": "Aura: Format File (aurafmt)"
+      },
+      {
+        "command": "aura.startWatch",
+        "title": "Aura: Start Live Watch Mode"
+      },
+      {
+        "command": "aura.openPlayground",
+        "title": "Aura: Open Online Playground",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "aura.restartServer",
+        "title": "Aura: Restart Language Server",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aura.previewSwagger",
+        "title": "Aura: Preview OpenAPI / Swagger Docs",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "aura.refreshDependencies",
+        "title": "Aura: Refresh Dependencies",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "aura.modTidy",
+        "title": "Aura: Tidy Module Dependencies (aurac mod tidy)",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "aura.modVendor",
+        "title": "Aura: Vendor Module Dependencies (aurac mod vendor)",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "aura.modInit",
+        "title": "Aura: Initialize Module (aurac mod init)",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "aura.ai.generateTests",
+        "title": "Aura AI: Generate Tests (auratest)",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "aura.ai.refactorCsp",
+        "title": "Aura AI: Refactor to CSP Concurrency",
+        "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "aura.ai.explainType",
+        "title": "Aura AI: Explain Type & Exhaustiveness",
+        "icon": "$(info)"
+      },
+      {
+        "command": "aura.ai.fixDiagnostic",
+        "title": "Aura AI: One-Click Fix Compiler Diagnostics",
+        "icon": "$(lightbulb-autofix)"
+      },
+      {
+        "command": "aura.ai.visualizeArchitecture",
+        "title": "Aura AI: Architecture & Concurrency Visualizer",
+        "icon": "$(graph)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "aura.refreshDependencies",
+          "when": "view == auraDependencies",
+          "group": "navigation@1"
+        },
+        {
+          "command": "aura.modTidy",
+          "when": "view == auraDependencies",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "aura.runActiveFile",
+          "group": "navigation@1",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.debugActiveFile",
+          "group": "navigation@2",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.showMenu",
+          "group": "navigation@3",
+          "when": "resourceExtname == .aura"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "aura.runActiveFile",
+          "group": "1_aura@1",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.debugActiveFile",
+          "group": "1_aura@2",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.stepDebugActiveFile",
+          "group": "1_aura@3",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.checkActiveFile",
+          "group": "1_aura@4",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.buildActiveFile",
+          "group": "1_aura@4",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.formatFile",
+          "group": "1_aura@5",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.ai.generateTests",
+          "group": "2_aura_ai@1",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.ai.refactorCsp",
+          "group": "2_aura_ai@2",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.ai.explainType",
+          "group": "2_aura_ai@3",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.ai.fixDiagnostic",
+          "group": "2_aura_ai@4",
+          "when": "resourceExtname == .aura"
+        },
+        {
+          "command": "aura.ai.visualizeArchitecture",
+          "group": "2_aura_ai@5",
+          "when": "resourceExtname == .aura"
+        }
+      ]
+    },
+    "problemMatchers": [
+      {
+        "name": "aurac",
+        "owner": "aura",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}"
+        ],
+        "pattern": {
+          "regexp": "^(?:✕\\s+)?(?:Type\\s+error|Syntax\\s+error|Compiler\\s+error)?.*?'([^']+)':?$",
+          "file": 1,
+          "message": 0
+        }
+      }
+    ]
+  },
+  "license": "MIT",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.14.6",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.24.0",
+    "typescript": "^5.0.4"
+  }
+}

@@ -1,0 +1,15 @@
+id = "aura"
+name = "Aura Language"
+version = "0.2.0"
+schema_version = 1
+authors = ["Aura Lang Team <team@aura-lang.org>"]
+description = "Language support for Aura in Zed with LSP, syntax highlighting and formatting."
+repository = "https://github.com/mrojasb2000/aura-lang"
+
+[grammars.aura]
+repository = "https://github.com/mrojasb2000/tree-sitter-aura"
+commit = "main"
+
+[language_servers.auralsp]
+name = "auralsp"
+language = "Aura"
