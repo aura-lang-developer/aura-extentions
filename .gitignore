@@ -1,0 +1,14 @@
+# Node & Editor extensions
+node_modules/
+dist/
+out/
+*.vsix
+.DS_Store
+
+# Rust / Zed build artifacts
+target/
+Cargo.lock
+
+# Temporary and log files
+*.log
+.aura/

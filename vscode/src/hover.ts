@@ -117,6 +117,48 @@ export const HOVER_DATABASE: Record<string, HoverDoc> = {
         ],
         example: 'interface Reader {\n    fn read(size: Int): String;\n}\n\nfn dump(r: Reader): Unit => {\n    println(r.read(1024));\n}'
     },
+    'struct': {
+        title: 'struct',
+        category: 'Keyword',
+        signature: 'export struct <Name> {\n    <field1>: <Type1>,\n    <field2>: <Type2>\n};',
+        description: 'Declara una estructura o registro fuertemente tipado (modelo Golang / Rust). Soporta métodos asociados con receptor por valor `fn (s: Struct) Method()` o por puntero `fn (s: *Struct) Method()`.',
+        example: 'export struct BankAccount {\n    accountNumber: String,\n    balance: Float,\n    isFrozen: Bool\n};\n\nfn (b: *BankAccount) Deposit(amount: Float): Result<Float, String> => {\n    b.balance = b.balance + amount;\n    Ok(b.balance)\n}'
+    },
+    'packed': {
+        title: 'packed',
+        category: 'Keyword',
+        signature: 'export packed struct <Name> {\n    <field1>: <Type1>\n};',
+        description: 'Modificador de alineación para structs (modelo Zig). Garantiza cero relleno (zero padding) intermedio y distribución binaria exacta y compacta en memoria, ideal para protocolos de red, drivers y FFI C.',
+        example: 'export packed struct PacketHeader {\n    magic: Int,\n    version: Byte,\n    flags: Byte,\n    payloadLength: Int\n};'
+    },
+    'go': {
+        title: 'go',
+        category: 'Keyword',
+        signature: 'go {\n    <concurrent_work>\n};',
+        description: 'Lanza una fibra concurrente ligera estilo Goroutine en el scheduler M:N de Aura con bajo consumo de memoria.',
+        example: 'go {\n    println("Ejecutando concurrentemente en fibra");\n};'
+    },
+    'routine': {
+        title: 'routine',
+        category: 'Keyword',
+        signature: 'routine {\n    <concurrent_work>\n};',
+        description: 'Lanza una rutina concurrente ligera gestionada por el scheduler de fibras de Aura.',
+        example: 'routine {\n    ch <- computeTask();\n};'
+    },
+    '//aura:build': {
+        title: '//aura:build',
+        category: 'Keyword',
+        signature: '//aura:build <expression>\n//go:build <expression>',
+        description: 'Directiva de compilación condicional colocada al inicio del archivo fuente. Permite compilar según el sistema operativo (`darwin`, `linux`, `windows`), arquitectura (`amd64`, `arm64`) o etiquetas personalizadas (`--tags "pro,metrics"`).',
+        example: '//aura:build (linux && amd64) || darwin\n//aura:build pro || metrics\n\nexport fn main(): Unit => {\n    println("Compilado condicionalmente");\n}'
+    },
+    '//go:build': {
+        title: '//go:build',
+        category: 'Keyword',
+        signature: '//go:build <expression>',
+        description: 'Directiva de compilación condicional estilo Go compatible con el evaluador de etiquetas de Aura.',
+        example: '//go:build linux || darwin'
+    },
     'trait': {
         title: 'trait',
         category: 'Keyword',
@@ -598,11 +640,31 @@ export const HOVER_DATABASE: Record<string, HoverDoc> = {
         signature: 'type Request = { method: String, url: String, headers: Map<String, String>, body: String }',
         description: 'Estructura que representa la petición HTTP entrante con método, URL, encabezados y cuerpo.'
     },
-    'Response': {
-        title: 'Response',
+    'ServeMux': {
+        title: 'ServeMux',
         category: 'Type',
-        signature: 'Response.json(data: Any, status: Int = 200): Response',
-        description: 'Constructor de respuesta HTTP tipada. Métodos utilitarios: `Response.json(val)`, `Response.html(str)`, `Response.error(msg, code)`.'
+        signature: 'let mux = http.newServeMux();',
+        description: 'Multiplexor y enrutador HTTP nativo (modelo Golang net/http). Soporta rutas dinámicas (`/api/tasks/:id`), middleware (`mux.use(...)`), y verbos HTTP (`mux.get`, `mux.post`, `mux.put`, `mux.delete`).',
+        example: 'let mux = http.newServeMux();\nmux.get("/api/health", fn(req: Any, res: Any) => {\n    http.json(res, http.StatusOK, { status: "ok" });\n});'
+    },
+    'Error': {
+        title: 'Error',
+        category: 'Type',
+        signature: 'type Error = String | { message: String, code?: Int }',
+        description: 'Tipo de error para variantes `Err(e)` en `Result<T, E>`.',
+        example: 'fn mayFail(): Result<Int, Error> => Err("Operación no permitida");'
+    },
+    'Never': {
+        title: 'Never',
+        category: 'Type',
+        signature: 'type Never',
+        description: 'Tipo de retorno para funciones que nunca retornan normalmente (ej. `panic()` o bucles infinitos de eventos).'
+    },
+    'Void': {
+        title: 'Void',
+        category: 'Type',
+        signature: 'type Void = ()',
+        description: 'Alias del tipo primitivo `Unit`.'
     },
 
     // ------------------------------------------------------------------------
@@ -807,6 +869,101 @@ export function parseAuraSource(content: string, filePath: string): ParsedDocume
     // 2. Line-by-line parser for functions, types, interfaces, and let bindings
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
+
+        // Structs: (export)? (packed)? struct Name { ... }
+        const structMatch = line.match(/^\s*(export\s+)?(packed\s+)?struct\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:<[^>]+>)?\s*\{?/);
+        if (structMatch) {
+            const isExport = Boolean(structMatch[1]);
+            const isPacked = Boolean(structMatch[2]);
+            const name = structMatch[3];
+            const doc = extractDocComments(lines, i);
+
+            let j = i;
+            let fullStruct = '';
+            while (j < lines.length) {
+                fullStruct += lines[j] + '\n';
+                if (lines[j].includes('}') || lines[j].includes('};')) break;
+                j++;
+            }
+
+            const fields: { name: string; type: string; tag?: string }[] = [];
+            const fieldMatches = fullStruct.matchAll(/([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*([^,\n}]+)/g);
+            for (const fm of fieldMatches) {
+                fields.push({ name: fm[1].trim(), type: fm[2].trim() });
+            }
+
+            const prefix = `${isExport ? 'export ' : ''}${isPacked ? 'packed ' : ''}`;
+            const signature = `${prefix}struct ${name} { ... }`;
+
+            symbols.set(name, {
+                name,
+                kind: 'type',
+                signature,
+                docComment: doc,
+                line: i,
+                rawSnippet: fullStruct.trim(),
+                fields,
+                sourceFile: filePath
+            });
+            continue;
+        }
+
+        // Method Receivers: (export)? (async)? fn (recv: *Type) MethodName(params): ReturnType
+        const recvMatch = line.match(/^\s*(export\s+)?(async\s+)?fn\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(\*?\s*[a-zA-Z_][a-zA-Z0-9_]*(?:<[^>]+>)?)\s*\)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)(?:\s*:\s*([^=>{]+))?/);
+        if (recvMatch) {
+            const isExport = Boolean(recvMatch[1]);
+            const isAsync = Boolean(recvMatch[2]);
+            const recvName = recvMatch[3];
+            const recvType = recvMatch[4].replace(/\s+/g, '');
+            const methodName = recvMatch[5];
+            const rawParams = recvMatch[6];
+            const returnType = (recvMatch[7] || 'Unit').trim();
+            const doc = extractDocComments(lines, i);
+
+            const paramsList: { name: string; type: string; desc: string }[] = [
+                { name: recvName, type: recvType, desc: 'Receptor del método (struct receiver).' }
+            ];
+            if (rawParams.trim()) {
+                const parts = rawParams.split(',');
+                for (const p of parts) {
+                    const colonIdx = p.indexOf(':');
+                    if (colonIdx > -1) {
+                        const pName = p.substring(0, colonIdx).trim();
+                        const pType = p.substring(colonIdx + 1).trim();
+                        paramsList.push({ name: pName, type: pType, desc: 'Parámetro del método.' });
+                    }
+                }
+            }
+
+            const prefix = `${isExport ? 'export ' : ''}${isAsync ? 'async ' : ''}`;
+            const signature = `${prefix}fn (${recvName}: ${recvType}) ${methodName}(${rawParams}): ${returnType}`;
+
+            symbols.set(methodName, {
+                name: methodName,
+                kind: 'function',
+                signature,
+                docComment: doc,
+                line: i,
+                rawSnippet: signature,
+                params: paramsList,
+                returns: { type: returnType, desc: 'Resultado de la invocación del método.' },
+                sourceFile: filePath
+            });
+
+            const cleanTypeName = recvType.replace(/^\*/, '');
+            symbols.set(`${cleanTypeName}.${methodName}`, {
+                name: `${cleanTypeName}.${methodName}`,
+                kind: 'function',
+                signature,
+                docComment: doc,
+                line: i,
+                rawSnippet: signature,
+                params: paramsList,
+                returns: { type: returnType, desc: 'Resultado de la invocación del método.' },
+                sourceFile: filePath
+            });
+            continue;
+        }
 
         // Functions: (export)? (async)? fn name(params): ReturnType
         const fnMatch = line.match(/^\s*(export\s+)?(async\s+)?fn\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)(?:\s*:\s*([^=>{]+))?/);

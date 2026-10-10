@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 export function registerAuraAiCommands(context: vscode.ExtensionContext) {
-    // 1. Generate Tests with AI
+    // 1. Generate Tests with AI (auratest)
     context.subscriptions.push(
         vscode.commands.registerCommand('aura.ai.generateTests', async () => {
             const editor = vscode.window.activeTextEditor;
@@ -14,7 +14,7 @@ export function registerAuraAiCommands(context: vscode.ExtensionContext) {
             const selection = editor.selection;
             const text = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
             const fileName = path.basename(editor.document.fileName);
-            const prompt = `Generate a comprehensive test suite using Aura Language's built-in 'auratest' framework for the following code from ${fileName}:\n\n\`\`\`aura\n${text}\n\`\`\`\n\nInclude unit tests, assertions with assert() and assert_eq(), edge cases, and benchmarks.`;
+            const prompt = `Generate a comprehensive test and benchmark suite using Aura Language's built-in 'auratest' engine for the following code from ${fileName}:\n\n\`\`\`aura\n${text}\n\`\`\`\n\nInclude unit tests with @test, assertions (assert, assert_eq), edge cases, concurrency tests with channels/spawn, and benchmarks with @bench.`;
 
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage(
@@ -42,14 +42,46 @@ export function registerAuraAiCommands(context: vscode.ExtensionContext) {
 
             const selection = editor.selection;
             const code = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
-            const prompt = `Refactor the following Aura code to use Go-style CSP concurrency with lightweight fibers (spawn), channels (Channel<T>::new(buffer)), channel send/receive (ch <- val, <-ch), and select multiplexing:\n\n\`\`\`aura\n${code}\n\`\`\``;
+            const prompt = `Refactor the following Aura code to use Go-style CSP concurrency with lightweight fibers (spawn), channels (Channel.new(buffer)), channel send/receive (channel <- value, <-channel), thread-safe sync.Mutex with defer mu.unlock(), and select multiplexing:\n\n\`\`\`aura\n${code}\n\`\`\``;
 
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage('Aura AI: CSP Concurrency prompt copied to clipboard! Paste into Antigravity Chat.');
         })
     );
 
-    // 3. Explain Type & Exhaustiveness Analysis
+    // 3. Refactor to Go-Style Struct Methods & Interfaces
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aura.ai.refactorReceivers', async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || editor.document.languageId !== 'aura') {
+                vscode.window.showWarningMessage('Please open an Aura source file first.');
+                return;
+            }
+
+            const selection = editor.selection;
+            const code = selection.isEmpty ? editor.document.getText() : editor.document.getText(selection);
+            const prompt = `Refactor the following Aura code to use Golang-style domain structs (struct / export struct), method receivers (fn (self: Type) Method() for read-only vs fn (self: *Type) Method() for mutations), and duck-typed structural interfaces:\n\n\`\`\`aura\n${code}\n\`\`\``;
+
+            await vscode.env.clipboard.writeText(prompt);
+            vscode.window.showInformationMessage('Aura AI: Struct Method Receivers prompt copied to clipboard! Paste into Antigravity Chat.');
+        })
+    );
+
+    // 4. Generate HTTP Backend Service (ServeMux)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('aura.ai.generateHttpService', async () => {
+            const editor = vscode.window.activeTextEditor;
+            const selection = editor?.selection;
+            const code = selection && !selection.isEmpty ? editor.document.getText(selection) : '';
+
+            const prompt = `Generate a high-performance backend microservice in Aura Lang using net/http style ServeMux (let mux = http.newServeMux()), logging/CORS middleware, dynamic route parameters (http.pathValue), thread-safe state synchronization with sync.Mutex and defer, and JSON responses (http.json):\n\n${code ? `Domain models:\n\`\`\`aura\n${code}\n\`\`\`\n` : ''}`;
+
+            await vscode.env.clipboard.writeText(prompt);
+            vscode.window.showInformationMessage('Aura AI: Backend HTTP Service prompt copied to clipboard! Paste into Antigravity Chat.');
+        })
+    );
+
+    // 5. Explain Type & Exhaustiveness Analysis
     context.subscriptions.push(
         vscode.commands.registerCommand('aura.ai.explainType', async () => {
             const editor = vscode.window.activeTextEditor;
@@ -61,13 +93,13 @@ export function registerAuraAiCommands(context: vscode.ExtensionContext) {
             const wordRange = editor.document.getWordRangeAtPosition(pos);
             const word = wordRange ? editor.document.getText(wordRange) : 'selected type';
 
-            const prompt = `Explain the Aura algebraic data type or interface '${word}', analyze its variants and provide an exhaustive pattern matching skeleton with match ${word} { ... } handling all arms cleanly.`;
+            const prompt = `Explain the Aura type or interface '${word}', analyze its variants/fields, and provide an exhaustive pattern matching skeleton with match ${word} { ... } handling all arms cleanly.`;
             await vscode.env.clipboard.writeText(prompt);
             vscode.window.showInformationMessage(`Aura AI: Type explanation & exhaustiveness prompt for '${word}' copied to clipboard.`);
         })
     );
 
-    // 4. One-Click Smart Fix for Diagnostics
+    // 6. One-Click Smart Fix for Diagnostics
     context.subscriptions.push(
         vscode.commands.registerCommand('aura.ai.fixDiagnostic', async () => {
             const editor = vscode.window.activeTextEditor;
@@ -90,7 +122,7 @@ export function registerAuraAiCommands(context: vscode.ExtensionContext) {
         })
     );
 
-    // 5. Architecture & Concurrency Visualizer
+    // 7. Architecture & Concurrency Visualizer
     context.subscriptions.push(
         vscode.commands.registerCommand('aura.ai.visualizeArchitecture', async () => {
             const editor = vscode.window.activeTextEditor;
@@ -110,33 +142,51 @@ export function registerAuraAiCommands(context: vscode.ExtensionContext) {
 }
 
 function getArchitectureHtml(sourceCode: string, fileName: string): string {
-    // Generate simple Mermaid graph by scanning items
     const lines = sourceCode.split('\n');
     const functions: string[] = [];
+    const receiverMethods: string[] = [];
+    const structs: string[] = [];
+    const interfaces: string[] = [];
     const channels: string[] = [];
-    const types: string[] = [];
 
     for (const line of lines) {
-        const fnMatch = line.match(/^\s*(?:export\s+)?fn\s+([a-zA-Z0-9_]+)/);
+        const recvMatch = line.match(/^\s*(?:export\s+)?(?:async\s+)?fn\s*\(\s*[a-zA-Z0-9_]+\s*:\s*(\*?[a-zA-Z0-9_]+)\s*\)\s*([a-zA-Z0-9_]+)/);
+        if (recvMatch) {
+            receiverMethods.push(`(${recvMatch[1]}) ${recvMatch[2]}()`);
+            continue;
+        }
+
+        const fnMatch = line.match(/^\s*(?:export\s+)?(?:async\s+)?fn\s+([a-zA-Z0-9_]+)/);
         if (fnMatch) functions.push(fnMatch[1]);
+
+        const structMatch = line.match(/^\s*(?:export\s+)?(?:packed\s+)?struct\s+([a-zA-Z0-9_]+)/);
+        if (structMatch) structs.push(structMatch[1]);
+
+        const ifaceMatch = line.match(/^\s*(?:export\s+)?interface\s+([a-zA-Z0-9_]+)/);
+        if (ifaceMatch) interfaces.push(ifaceMatch[1]);
 
         const chMatch = line.match(/(?:let\s+)?([a-zA-Z0-9_]+)\s*=\s*Channel/);
         if (chMatch) channels.push(chMatch[1]);
-
-        const tyMatch = line.match(/^\s*(?:export\s+)?type\s+([a-zA-Z0-9_]+)/);
-        if (tyMatch) types.push(tyMatch[1]);
     }
 
     let mermaidGraph = 'graph TD\\n';
-    mermaidGraph += `  subgraph Module["${fileName}"]\\n`;
+    mermaidGraph += `  subgraph Module["📁 ${fileName}"]\\n`;
+
+    for (const s of structs.slice(0, 6)) {
+        mermaidGraph += `    struct_${s}["🏛️ struct ${s}"]\\n`;
+    }
+    for (const iface of interfaces.slice(0, 4)) {
+        mermaidGraph += `    iface_${iface}["📑 interface ${iface}"]\\n`;
+    }
+    for (const m of receiverMethods.slice(0, 8)) {
+        const cleanId = m.replace(/[^a-zA-Z0-9_]/g, '_');
+        mermaidGraph += `    recv_${cleanId}["⚙️ ${m}"]\\n`;
+    }
     for (const f of functions.slice(0, 8)) {
-        mermaidGraph += `    fn_${f}["fn ${f}()"]\\n`;
+        mermaidGraph += `    fn_${f}["⚡ fn ${f}()"]\\n`;
     }
     for (const ch of channels.slice(0, 5)) {
-        mermaidGraph += `    chan_${ch}(("chan ${ch}"))\\n`;
-    }
-    for (const t of types.slice(0, 5)) {
-        mermaidGraph += `    type_${t}["type ${t}"]\\n`;
+        mermaidGraph += `    chan_${ch}(("📨 chan ${ch}"))\\n`;
     }
     mermaidGraph += '  end\\n';
 
@@ -147,20 +197,26 @@ function getArchitectureHtml(sourceCode: string, fileName: string): string {
     <title>Aura Architecture Visualizer</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
-        .card { background: #252526; border: 1px solid #3c3c3c; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #4ec9b0; }
-        .mermaid { display: flex; justify-content: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #18181b; color: #f4f4f5; padding: 24px; margin: 0; }
+        h2 { color: #38bdf8; font-size: 1.3rem; margin-top: 0; }
+        .card { background: #27272a; border-radius: 8px; padding: 16px; margin-bottom: 20px; border: 1px solid #3f3f46; }
+        .mermaid { background: #1e1e24; border-radius: 6px; padding: 16px; }
+        .legend { display: flex; gap: 12px; margin-top: 12px; font-size: 0.85rem; color: #a1a1aa; flex-wrap: wrap; }
+        .badge { background: #3f3f46; padding: 2px 8px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>⚡ Aura Architecture & Concurrency Visualizer</h2>
-        <p>Visualizing structure, channels, and types for <code>${fileName}</code>.</p>
-    </div>
+    <h2>🌌 Aura Architecture & Concurrency Visualizer</h2>
     <div class="card">
         <div class="mermaid">
-            ${mermaidGraph.replace(/\\n/g, '\n')}
+${mermaidGraph}
+        </div>
+        <div class="legend">
+            <span class="badge">🏛️ Structs</span>
+            <span class="badge">📑 Interfaces</span>
+            <span class="badge">⚙️ Receivers</span>
+            <span class="badge">⚡ Functions</span>
+            <span class="badge">📨 Channels</span>
         </div>
     </div>
     <script>

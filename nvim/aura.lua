@@ -1,36 +1,13 @@
--- Aura Language Server configuration for Neovim (nvim-lspconfig & vim.lsp)
+-- aura.lua: Quick standalone setup for Neovim (nvim-lspconfig & vim.lsp)
+-- You can either `require("aura").setup()` or source this file directly.
 
--- 1. Register .aura filetype
-vim.filetype.add({
-  extension = {
-    aura = "aura",
+local aura = require("aura")
+aura.setup({
+  lsp = {
+    enable = true,
+    inlay_hints = true,
+    format_on_save = false,
   },
 })
 
--- 2. Setup LSP client
-local lspconfig = require("lspconfig")
-local configs = require("lspconfig.configs")
-
-if not configs.auralsp then
-  configs.auralsp = {
-    default_config = {
-      cmd = { "auralsp" },
-      filetypes = { "aura" },
-      root_dir = function(fname)
-        return lspconfig.util.find_git_ancestor(fname) or vim.fn.getcwd()
-      end,
-      settings = {},
-    },
-  }
-end
-
-lspconfig.auralsp.setup({
-  on_attach = function(client, bufnr)
-    local opts = { noremap = true, silent = true, buffer = bufnr }
-    vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-    vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-    vim.keymap.set("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, opts)
-    vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-    vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
-  end,
-})
+return aura

@@ -16,11 +16,24 @@ export function createAuraTestController(
     // Discover tests when workspace opens or files change
     discoverTests(controller);
 
-    const watcher = vscode.workspace.createFileSystemWatcher('**/*_test.aura');
-    watcher.onDidCreate(() => discoverTests(controller));
-    watcher.onDidChange(() => discoverTests(controller));
+    const watcher = vscode.workspace.createFileSystemWatcher('**/{*test*,tests}/**/*.aura');
+    const directWatcher = vscode.workspace.createFileSystemWatcher('**/*_test.aura');
+    const prefixWatcher = vscode.workspace.createFileSystemWatcher('**/test_*.aura');
+
+    const triggerDiscovery = () => discoverTests(controller);
+    watcher.onDidCreate(triggerDiscovery);
+    watcher.onDidChange(triggerDiscovery);
     watcher.onDidDelete((uri) => controller.items.delete(uri.toString()));
-    context.subscriptions.push(watcher);
+
+    directWatcher.onDidCreate(triggerDiscovery);
+    directWatcher.onDidChange(triggerDiscovery);
+    directWatcher.onDidDelete((uri) => controller.items.delete(uri.toString()));
+
+    prefixWatcher.onDidCreate(triggerDiscovery);
+    prefixWatcher.onDidChange(triggerDiscovery);
+    prefixWatcher.onDidDelete((uri) => controller.items.delete(uri.toString()));
+
+    context.subscriptions.push(watcher, directWatcher, prefixWatcher);
 
     const runProfile = controller.createRunProfile(
         'Run Aura Tests',
@@ -45,7 +58,17 @@ export function createAuraTestController(
 
                 run.started(test);
                 const testFilePath = test.uri?.fsPath;
-                const args = testFilePath ? [testFilePath] : [];
+                const args: string[] = ['-v'];
+
+                // If running a specific test function (id contains ::)
+                if (test.id.includes('::')) {
+                    const funcName = test.id.split('::')[1];
+                    args.push('--run', `^${funcName}$`);
+                }
+
+                if (testFilePath) {
+                    args.push(testFilePath);
+                }
 
                 await new Promise<void>((resolve) => {
                     const proc = spawn(auratest, args, { cwd: workspaceFolder });
@@ -84,7 +107,7 @@ export function createAuraTestController(
 }
 
 async function discoverTests(controller: vscode.TestController) {
-    const testFiles = await vscode.workspace.findFiles('**/*_test.aura', '**/node_modules/**');
+    const testFiles = await vscode.workspace.findFiles('**/{*_test.aura,test_*.aura,tests/*.aura}', '**/node_modules/**');
     for (const file of testFiles) {
         const id = file.toString();
         const label = path.basename(file.fsPath);
@@ -95,22 +118,41 @@ async function discoverTests(controller: vscode.TestController) {
             controller.items.add(testItem);
         }
 
-        // Parse individual test functions in file
+        // Parse individual test and benchmark functions in file
         try {
             const doc = await vscode.workspace.openTextDocument(file);
             const content = doc.getText();
             const lines = content.split('\n');
 
             testItem.children.replace([]);
+            let hasDecorator = false;
+
             lines.forEach((line, index) => {
-                const match = line.match(/^\s*(?:export\s+)?fn\s+(test_[a-zA-Z0-9_]+)/);
-                if (match) {
-                    const testName = match[1];
-                    const childId = `${id}::${testName}`;
-                    const childItem = controller.createTestItem(childId, testName, file);
-                    childItem.range = new vscode.Range(index, 0, index, line.length);
-                    testItem?.children.add(childItem);
+                const trimmed = line.trim();
+                if (trimmed.startsWith('@test') || trimmed.startsWith('@bench')) {
+                    hasDecorator = true;
+                    return;
                 }
+
+                // Match test functions: fn test_xxx, fn TestXxx, fn bench_xxx, fn BenchmarkXxx, or decorated fn xxx
+                const match = line.match(/^\s*(?:export\s+)?(?:async\s+)?fn\s+((?:test_|Test|bench_|Benchmark)[a-zA-Z0-9_]+|[a-zA-Z0-9_]+)/);
+                if (match) {
+                    const funcName = match[1];
+                    const isTestFn = funcName.startsWith('test_') ||
+                                     funcName.startsWith('Test') ||
+                                     funcName.startsWith('bench_') ||
+                                     funcName.startsWith('Benchmark') ||
+                                     hasDecorator;
+
+                    if (isTestFn) {
+                        const childId = `${id}::${funcName}`;
+                        const isBench = funcName.startsWith('bench_') || funcName.startsWith('Benchmark');
+                        const childItem = controller.createTestItem(childId, `${isBench ? '⚡ ' : '🧪 '}${funcName}`, file);
+                        childItem.range = new vscode.Range(index, 0, index, line.length);
+                        testItem?.children.add(childItem);
+                    }
+                }
+                hasDecorator = false;
             });
         } catch {
             // Document read failed, retain file-level test item
