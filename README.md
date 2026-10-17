@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/aura-mascot.png" width="160" height="160" alt="Aura Language Mascot" />
+</p>
+
 # ⚡ Aura Language — Ecosistema de Soporte para Editores e IDEs
 
 Bienvenido al repositorio oficial del ecosistema de extensiones y herramientas de edición para el lenguaje de programación **Aura** (`aurac`). Este monorepo alberga las integraciones de primera clase para los entornos de desarrollo más populares del ecosistema moderno:

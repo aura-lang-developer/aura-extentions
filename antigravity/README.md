@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/icon.png" width="128" height="128" alt="Aura Language Mascot" />
+</p>
+
 # 🌟 Aura Language Support for Antigravity IDE
 
 Official extension for **Aura Language** (`aurac`) tailored for **Google Antigravity IDE** and VS Code.

@@ -3,6 +3,7 @@
   "displayName": "Aura Language Support",
   "description": "Rich Language Server Protocol, Syntax Highlighting, Snippets, Hover, Go to Definition and Diagnostics for Aura Language",
   "version": "0.2.0",
+  "icon": "images/icon.png",
   "publisher": "aura-lang",
   "repository": {
     "type": "git",
@@ -171,7 +172,7 @@
         {
           "id": "aura-view-container",
           "title": "Aura",
-          "icon": "$(zap)"
+          "icon": "images/icon.png"
         }
       ]
     },

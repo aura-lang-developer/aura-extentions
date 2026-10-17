@@ -3,6 +3,7 @@
   "displayName": "Aura Language Support for Antigravity IDE",
   "description": "First-class language support, rich LSP, snippets, problem matchers, and commands for Aura in Antigravity IDE",
   "version": "0.1.0",
+  "icon": "images/icon.png",
   "publisher": "aura-lang",
   "repository": {
     "type": "git",
@@ -174,7 +175,7 @@
         {
           "id": "aura-view-container",
           "title": "Aura",
-          "icon": "$(zap)"
+          "icon": "images/icon.png"
         }
       ]
     },
