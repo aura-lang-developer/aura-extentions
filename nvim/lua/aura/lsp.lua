@@ -1,8 +1,12 @@
 local M = {}
 
 local function find_root(fname)
-  local util = require("lspconfig.util")
-  return util.root_pattern("aura.mod", "aura.lock", ".git")(fname) or vim.fn.getcwd()
+  local util = pcall(require, "lspconfig.util") and require("lspconfig.util") or nil
+  if util then
+    return util.root_pattern("aura.mod", "aura.lock", ".git")(fname) or vim.fn.getcwd()
+  end
+  local root = vim.fs.find({ "aura.mod", "aura.lock", ".git" }, { upward = true, path = fname })[1]
+  return root and vim.fs.dirname(root) or vim.fn.getcwd()
 end
 
 local function resolve_lsp_command(options)
@@ -23,7 +27,28 @@ local function resolve_lsp_command(options)
     return { target_debug }
   end
 
-  -- Check standard fallback
+  -- Check user cargo and local directories
+  local home = vim.fn.expand("$HOME")
+  local candidates = {
+    home .. "/.cargo/bin/auralsp",
+    home .. "/.aura/bin/auralsp",
+    "/opt/homebrew/bin/auralsp",
+    "/usr/local/bin/auralsp",
+    home .. "/.cargo/bin/aurac",
+    "/opt/homebrew/bin/aurac",
+    "/usr/local/bin/aurac",
+  }
+
+  for _, candidate in ipairs(candidates) do
+    if vim.fn.executable(candidate) == 1 then
+      if candidate:match("aurac$") then
+        return { candidate, "lsp" }
+      end
+      return { candidate }
+    end
+  end
+
+  -- Check system PATH
   if vim.fn.executable("auralsp") == 1 then
     return { "auralsp" }
   end
@@ -37,26 +62,13 @@ end
 
 function M.setup(options)
   local has_lspconfig, lspconfig = pcall(require, "lspconfig")
-  local configs = require("lspconfig.configs")
-
   local cmd = resolve_lsp_command(options)
-
-  if not configs.auralsp then
-    configs.auralsp = {
-      default_config = {
-        cmd = cmd,
-        filetypes = { "aura" },
-        root_dir = find_root,
-        settings = {},
-      },
-    }
-  end
 
   local on_attach = function(client, bufnr)
     local opts = { noremap = true, silent = true, buffer = bufnr }
     local km = options.keymaps
 
-    if km.enable then
+    if km and km.enable then
       if km.hover then vim.keymap.set("n", km.hover, vim.lsp.buf.hover, opts) end
       if km.definition then vim.keymap.set("n", km.definition, vim.lsp.buf.definition, opts) end
       if km.references then vim.keymap.set("n", km.references, vim.lsp.buf.references, opts) end
@@ -92,10 +104,37 @@ function M.setup(options)
     vim.diagnostic.config(options.diagnostics)
   end
 
-  lspconfig.auralsp.setup({
-    cmd = cmd,
-    on_attach = on_attach,
-  })
+  if has_lspconfig then
+    local configs = require("lspconfig.configs")
+    if not configs.auralsp then
+      configs.auralsp = {
+        default_config = {
+          cmd = cmd,
+          filetypes = { "aura" },
+          root_dir = find_root,
+          settings = {},
+        },
+      }
+    end
+
+    lspconfig.auralsp.setup({
+      cmd = cmd,
+      on_attach = on_attach,
+    })
+  elseif vim.lsp and vim.lsp.start then
+    -- Native Neovim 0.8+ LSP fallback without requiring nvim-lspconfig
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "aura",
+      callback = function(ev)
+        vim.lsp.start({
+          name = "auralsp",
+          cmd = cmd,
+          root_dir = find_root(vim.api.nvim_buf_get_name(ev.buf)),
+          on_attach = on_attach,
+        })
+      end,
+    })
+  end
 end
 
 return M

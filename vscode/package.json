@@ -51,6 +51,26 @@
           ".aura"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "auramod",
+        "aliases": [
+          "Aura Module",
+          "aura.mod"
+        ],
+        "filenames": [
+          "aura.mod"
+        ]
+      },
+      {
+        "id": "auralock",
+        "aliases": [
+          "Aura Lockfile",
+          "aura.lock"
+        ],
+        "filenames": [
+          "aura.lock"
+        ]
       }
     ],
     "grammars": [
@@ -58,6 +78,16 @@
         "language": "aura",
         "scopeName": "source.aura",
         "path": "./syntaxes/aura.tmLanguage.json"
+      },
+      {
+        "language": "auramod",
+        "scopeName": "source.auramod",
+        "path": "./syntaxes/auramod.tmLanguage.json"
+      },
+      {
+        "language": "auralock",
+        "scopeName": "source.auralock",
+        "path": "./syntaxes/auralock.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -298,6 +328,21 @@
         "icon": "$(sync)"
       },
       {
+        "command": "aura.runTestsWithCoverage",
+        "title": "Aura: Run Test Suite with Code Coverage",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "aura.openCoverageReport",
+        "title": "Aura: Open Coverage HTML Report",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "aura.modVerify",
+        "title": "Aura: Verify Cryptographic Hashes (aurac mod verify)",
+        "icon": "$(shield)"
+      },
+      {
         "command": "aura.modVendor",
         "title": "Aura: Vendor Module Dependencies (aurac mod vendor)",
         "icon": "$(archive)"
@@ -319,6 +364,11 @@
           "command": "aura.modTidy",
           "when": "view == auraDependencies",
           "group": "navigation@2"
+        },
+        {
+          "command": "aura.modVerify",
+          "when": "view == auraDependencies",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [

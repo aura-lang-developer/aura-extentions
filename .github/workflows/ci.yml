@@ -1,0 +1,47 @@
+name: CI - Aura Extensions Ecosytem
+
+on:
+  push:
+    branches: [ main, feat/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-extensions:
+    name: Build & Validate All Extensions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            vscode/package-lock.json
+            antigravity/package-lock.json
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1, wasm32-unknown-unknown
+
+      - name: Install & Compile VS Code Extension
+        run: |
+          cd vscode
+          npm ci
+          npm run compile
+
+      - name: Install & Compile Antigravity IDE Extension
+        run: |
+          cd antigravity
+          npm ci
+          npm run compile
+
+      - name: Validate Zed Extension (Rust / WASM)
+        run: |
+          cd zed
+          cargo check

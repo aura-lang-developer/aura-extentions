@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Aura Module",
+  "scopeName": "source.auramod",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.auramod",
+      "match": "(?://|#).*$"
+    },
+    {
+      "match": "^\\s*(module)\\s+([a-zA-Z0-9_./-]+)",
+      "captures": {
+        "1": { "name": "keyword.control.module.auramod" },
+        "2": { "name": "entity.name.namespace.auramod" }
+      }
+    },
+    {
+      "match": "^\\s*(aura)\\s+([0-9]+\\.[0-9]+(?:\\.[0-9]+)?(?:-[a-zA-Z0-9_.]+)?)$",
+      "captures": {
+        "1": { "name": "keyword.control.aura.auramod" },
+        "2": { "name": "constant.numeric.version.auramod" }
+      }
+    },
+    {
+      "begin": "^\\s*(require|replace)\\s*\\(",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.block.auramod" }
+      },
+      "end": "\\)",
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.auramod",
+          "match": "(?://|#).*$"
+        },
+        {
+          "match": "([a-zA-Z0-9_./-]+)\\s+=>\\s+([a-zA-Z0-9_./-]+(?:\\s+v[0-9a-zA-Z_.-]+)?)",
+          "captures": {
+            "1": { "name": "entity.name.package.auramod" },
+            "2": { "name": "string.unquoted.target.auramod" }
+          }
+        },
+        {
+          "match": "([a-zA-Z0-9_./-]+)\\s+(v?[0-9]+\\.[0-9]+(?:\\.[0-9]+)?(?:-[a-zA-Z0-9_.]+)?|indirect)",
+          "captures": {
+            "1": { "name": "entity.name.package.auramod" },
+            "2": { "name": "constant.numeric.version.auramod" }
+          }
+        }
+      ]
+    },
+    {
+      "match": "^\\s*(require)\\s+([a-zA-Z0-9_./-]+)\\s+(v?[0-9]+\\.[0-9]+(?:\\.[0-9]+)?(?:-[a-zA-Z0-9_.]+)?|indirect)",
+      "captures": {
+        "1": { "name": "keyword.control.require.auramod" },
+        "2": { "name": "entity.name.package.auramod" },
+        "3": { "name": "constant.numeric.version.auramod" }
+      }
+    },
+    {
+      "match": "^\\s*(replace)\\s+([a-zA-Z0-9_./-]+)\\s+=>\\s+([a-zA-Z0-9_./-]+(?:\\s+v[0-9a-zA-Z_.-]+)?)",
+      "captures": {
+        "1": { "name": "keyword.control.replace.auramod" },
+        "2": { "name": "entity.name.package.auramod" },
+        "3": { "name": "string.unquoted.target.auramod" }
+      }
+    }
+  ]
+}

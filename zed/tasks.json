@@ -6,6 +6,12 @@
     "allow_concurrent_runs": false
   },
   {
+    "label": "Aura: Interactive Step Debugger (CLI)",
+    "command": "aurac step \"$ZED_FILE\"",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
     "label": "Aura: Type Check Active File",
     "command": "aurac check \"$ZED_FILE\"",
     "use_new_terminal": false,
@@ -36,8 +42,20 @@
     "allow_concurrent_runs": false
   },
   {
+    "label": "Aura: Test Suite with Code Coverage",
+    "command": "auratest -cover",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
     "label": "Aura: Run Benchmarks (aurac test --bench)",
     "command": "aurac test --bench",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Start Live Watch Mode",
+    "command": "aurac watch \"$ZED_FILE\" --run",
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },

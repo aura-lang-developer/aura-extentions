@@ -1,14 +1,18 @@
 # Node & Editor extensions
-node_modules/
-dist/
-out/
+**/node_modules/
+**/dist/
+**/out/
 *.vsix
+**/*.vsix
 .DS_Store
 
 # Rust / Zed build artifacts
-target/
+**/target/
 Cargo.lock
+**/extension.wasm
+**/grammars/
 
 # Temporary and log files
 *.log
-.aura/
+**/.aura/
+**/.vscode-test/

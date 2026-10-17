@@ -1,0 +1,19 @@
+{
+  "name": "aura-extentions-monorepo",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Official IDE & Editor Extensions Monorepo for the Aura Programming Language (VS Code, Antigravity IDE, Zed, Neovim)",
+  "scripts": {
+    "compile:vscode": "npm run compile --prefix vscode",
+    "compile:antigravity": "npm run compile --prefix antigravity",
+    "compile": "npm run compile:vscode && npm run compile:antigravity",
+    "package:vscode": "npm run package --prefix vscode",
+    "package:antigravity": "npm run package --prefix antigravity",
+    "package:all": "npm run package:vscode && npm run package:antigravity",
+    "check:vscode": "npm run compile:vscode",
+    "check:antigravity": "npm run compile:antigravity",
+    "check:zed": "cd zed && cargo check",
+    "check:all": "npm run check:vscode && npm run check:antigravity && npm run check:zed",
+    "build:all": "npm run compile && npm run check:zed"
+  }
+}

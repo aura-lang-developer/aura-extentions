@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as fs from 'fs';
 import * as vscode from 'vscode';
 import {
     LanguageClient,
@@ -13,6 +12,7 @@ import { createAuraTestController } from './testController';
 import { AuraTaskProvider } from './taskProvider';
 import { AuraDependenciesProvider } from './dependencyExplorer';
 import { openSwaggerPreview } from './swaggerPreview';
+import { resolveBinary, resolveAuraTool } from './utils';
 
 let client: LanguageClient | undefined;
 let statusBarItem: vscode.StatusBarItem;
@@ -25,37 +25,12 @@ function getAuraTerminal(): vscode.Terminal {
     return terminal;
 }
 
-function resolveBinary(binaryName: string, configPathKey: string): string {
-    const config = vscode.workspace.getConfiguration('aura');
-    const customPath = config.get<string>(configPathKey);
-    if (customPath && customPath.trim() !== '') {
-        return customPath.trim();
-    }
-
-    // Check workspace target/release or target/debug
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders) {
-        for (const folder of workspaceFolders) {
-            const releaseBin = path.join(folder.uri.fsPath, 'target', 'release', binaryName);
-            if (fs.existsSync(releaseBin)) {
-                return releaseBin;
-            }
-            const debugBin = path.join(folder.uri.fsPath, 'target', 'debug', binaryName);
-            if (fs.existsSync(debugBin)) {
-                return debugBin;
-            }
-        }
-    }
-
-    return binaryName;
-}
-
 export function activate(context: vscode.ExtensionContext) {
-    const serverBinary = resolveBinary('auralsp', 'server.path');
+    const serverTool = resolveAuraTool('auralsp');
 
     const serverOptions: ServerOptions = {
-        command: serverBinary,
-        args: [],
+        command: serverTool.executable,
+        args: serverTool.prefixArgs,
         transport: TransportKind.stdio
     };
 
@@ -108,11 +83,14 @@ export function activate(context: vscode.ExtensionContext) {
                 { label: '$(check) Type Check Active File', description: 'Run aurac check on active file', id: 'check' },
                 { label: '$(gear) Build Standalone Binary', description: 'Compile to standalone native binary', id: 'build' },
                 { label: '$(beaker) Run Project Tests', description: 'Execute test suite with auratest', id: 'test' },
+                { label: '$(dashboard) Run Tests with Coverage', description: 'Execute tests with code coverage analysis', id: 'testCoverage' },
+                { label: '$(graph) Open Coverage HTML Report', description: 'Generate interactive coverage report', id: 'coverageHtml' },
                 { label: '$(edit) Format Active File', description: 'Format using aurafmt', id: 'fmt' },
                 { label: '$(eye) Start Live Watch Mode', description: 'Watch and recompile on file save', id: 'watch' },
                 { label: '$(browser) Open Online Playground', description: 'Open local interactive playground', id: 'playground' },
                 { label: '$(preview) Preview OpenAPI / Swagger Docs', description: 'Open interactive Swagger UI webview', id: 'swagger' },
                 { label: '$(sync) Tidy Dependencies (aurac mod tidy)', description: 'Discover and tidy module dependencies', id: 'tidy' },
+                { label: '$(shield) Verify Hashes (aurac mod verify)', description: 'Verify SHA-256 tree checksums in aura.lock', id: 'verify' },
                 { label: '$(archive) Vendor Dependencies (aurac mod vendor)', description: 'Vendor and freeze dependencies locally', id: 'vendor' },
                 { label: '$(new-folder) Initialize Module (aurac mod init)', description: 'Create new aura.mod module', id: 'init' },
                 { label: '$(refresh) Restart Language Server', description: 'Restart Aura LSP daemon', id: 'restart' }
@@ -141,6 +119,12 @@ export function activate(context: vscode.ExtensionContext) {
                 case 'test':
                     vscode.commands.executeCommand('aura.runTests');
                     break;
+                case 'testCoverage':
+                    vscode.commands.executeCommand('aura.runTestsWithCoverage');
+                    break;
+                case 'coverageHtml':
+                    vscode.commands.executeCommand('aura.openCoverageReport');
+                    break;
                 case 'fmt':
                     vscode.commands.executeCommand('aura.formatFile');
                     break;
@@ -155,6 +139,9 @@ export function activate(context: vscode.ExtensionContext) {
                     break;
                 case 'tidy':
                     vscode.commands.executeCommand('aura.modTidy');
+                    break;
+                case 'verify':
+                    vscode.commands.executeCommand('aura.modVerify');
                     break;
                 case 'vendor':
                     vscode.commands.executeCommand('aura.modVendor');
@@ -248,10 +235,26 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('aura.runTests', async () => {
-            const auratest = resolveBinary('auratest', 'compiler.path');
+            const tool = resolveAuraTool('auratest');
             const term = getAuraTerminal();
             term.show();
-            term.sendText(`${auratest}`);
+            const prefix = tool.prefixArgs.length > 0 ? `${tool.prefixArgs.join(' ')} ` : '';
+            term.sendText(`${tool.executable} ${prefix}-v`.trim());
+        }),
+        vscode.commands.registerCommand('aura.runTestsWithCoverage', async () => {
+            const tool = resolveAuraTool('auratest');
+            const term = getAuraTerminal();
+            term.show();
+            const prefix = tool.prefixArgs.length > 0 ? `${tool.prefixArgs.join(' ')} ` : '';
+            term.sendText(`${tool.executable} ${prefix}-v -cover`.trim());
+        }),
+        vscode.commands.registerCommand('aura.openCoverageReport', async () => {
+            const tool = resolveAuraTool('auratest');
+            const term = getAuraTerminal();
+            term.show();
+            const prefix = tool.prefixArgs.length > 0 ? `${tool.prefixArgs.join(' ')} ` : '';
+            term.sendText(`${tool.executable} ${prefix}--coverage-html coverage.html`.trim());
+            vscode.window.showInformationMessage('Generating Aura test coverage report: coverage.html');
         })
     );
 
@@ -263,10 +266,11 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             await editor.document.save();
-            const aurafmt = resolveBinary('aurafmt', 'compiler.path');
+            const tool = resolveAuraTool('aurafmt');
             const term = getAuraTerminal();
             term.show();
-            term.sendText(`${aurafmt} -w "${editor.document.fileName}"`);
+            const prefix = tool.prefixArgs.length > 0 ? `${tool.prefixArgs.join(' ')} ` : '';
+            term.sendText(`${tool.executable} ${prefix}-w "${editor.document.fileName}"`.trim());
         })
     );
 
@@ -322,6 +326,12 @@ export function activate(context: vscode.ExtensionContext) {
             term.show();
             term.sendText(`${aurac} mod tidy`);
             setTimeout(() => depsProvider.refresh(), 2000);
+        }),
+        vscode.commands.registerCommand('aura.modVerify', () => {
+            const aurac = resolveBinary('aurac', 'compiler.path');
+            const term = getAuraTerminal();
+            term.show();
+            term.sendText(`${aurac} mod verify`);
         }),
         vscode.commands.registerCommand('aura.modVendor', () => {
             const aurac = resolveBinary('aurac', 'compiler.path');

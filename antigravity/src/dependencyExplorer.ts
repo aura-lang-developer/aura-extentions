@@ -11,10 +11,13 @@ export class AuraDependencyItem extends vscode.TreeItem {
         public readonly category: DependencyCategory,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly isVerified: boolean = false,
-        public readonly targetPath?: string
+        public readonly targetPath?: string,
+        public readonly targetFile?: string,
+        public readonly lineNumber?: number
     ) {
         super(label, collapsibleState);
         this.description = versionOrDetail;
+        this.contextValue = category;
 
         switch (category) {
             case 'module':
@@ -33,6 +36,19 @@ export class AuraDependencyItem extends vscode.TreeItem {
                 this.iconPath = new vscode.ThemeIcon('lock');
                 this.tooltip = `Lockfile: ${label} (${versionOrDetail})`;
                 break;
+        }
+
+        if (targetFile) {
+            this.command = {
+                command: 'vscode.open',
+                title: 'Open File',
+                arguments: [
+                    vscode.Uri.file(targetFile),
+                    lineNumber !== undefined
+                        ? { selection: new vscode.Range(lineNumber, 0, lineNumber, 0) }
+                        : undefined
+                ]
+            };
         }
     }
 }
@@ -90,18 +106,21 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
 
                 let moduleName = 'unknown-module';
                 let auraVersion = '0.1.0';
-                const requires: { name: string; version: string; isVerified: boolean }[] = [];
-                const replaces: { name: string; target: string }[] = [];
+                let moduleLine = 0;
+                const requires: { name: string; version: string; isVerified: boolean; line: number }[] = [];
+                const replaces: { name: string; target: string; line: number }[] = [];
 
                 let inRequireBlock = false;
                 let inReplaceBlock = false;
 
-                for (const rawLine of lines) {
+                for (let i = 0; i < lines.length; i++) {
+                    const rawLine = lines[i];
                     const line = rawLine.trim();
                     if (!line || line.startsWith('//') || line.startsWith('#')) continue;
 
                     if (line.startsWith('module ')) {
                         moduleName = line.substring(7).trim();
+                        moduleLine = i;
                         continue;
                     }
 
@@ -127,7 +146,8 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                             requires.push({
                                 name: depName,
                                 version: depVer,
-                                isVerified: lockHashes.has(depName)
+                                isVerified: lockHashes.has(depName),
+                                line: i
                             });
                         }
                         continue;
@@ -142,7 +162,8 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                             requires.push({
                                 name: depName,
                                 version: depVer,
-                                isVerified: lockHashes.has(depName)
+                                isVerified: lockHashes.has(depName),
+                                line: i
                             });
                         }
                         continue;
@@ -162,7 +183,7 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                         if (arrowIdx > -1) {
                             const orig = line.substring(0, arrowIdx).trim();
                             const target = line.substring(arrowIdx + 2).trim();
-                            replaces.push({ name: orig, target });
+                            replaces.push({ name: orig, target, line: i });
                         }
                         continue;
                     }
@@ -173,7 +194,7 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                         if (arrowIdx > -1) {
                             const orig = rest.substring(0, arrowIdx).trim();
                             const target = rest.substring(arrowIdx + 2).trim();
-                            replaces.push({ name: orig, target });
+                            replaces.push({ name: orig, target, line: i });
                         }
                         continue;
                     }
@@ -184,7 +205,11 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                     moduleName,
                     `Aura v${auraVersion}`,
                     'module',
-                    vscode.TreeItemCollapsibleState.None
+                    vscode.TreeItemCollapsibleState.None,
+                    false,
+                    undefined,
+                    modFile,
+                    moduleLine
                 ));
 
                 // Add Require Items
@@ -194,7 +219,10 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                         req.version,
                         'require',
                         vscode.TreeItemCollapsibleState.None,
-                        req.isVerified
+                        req.isVerified,
+                        undefined,
+                        modFile,
+                        req.line
                     ));
                 }
 
@@ -206,7 +234,9 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                         'replace',
                         vscode.TreeItemCollapsibleState.None,
                         false,
-                        rep.target
+                        rep.target,
+                        modFile,
+                        rep.line
                     ));
                 }
 
@@ -217,7 +247,10 @@ export class AuraDependenciesProvider implements vscode.TreeDataProvider<AuraDep
                         `${lockHashes.size} package(s) verified (SHA-256)`,
                         'lock',
                         vscode.TreeItemCollapsibleState.None,
-                        true
+                        true,
+                        undefined,
+                        lockFile,
+                        0
                     ));
                 }
             } catch {

@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
+import { resolveAuraTool, resolveBinary } from './utils';
 
 export class AuraTaskProvider implements vscode.TaskProvider {
     static readonly AuraType = 'aura';
 
-    constructor(private resolveBinary: (bin: string, key: string) => string) {}
+    constructor(private _resolveBinary: (bin: string, key: string) => string) {}
 
     public provideTasks(): vscode.ProviderResult<vscode.Task[]> {
         return this.getAuraTasks();
@@ -15,9 +16,17 @@ export class AuraTaskProvider implements vscode.TaskProvider {
 
     private getAuraTasks(): vscode.Task[] {
         const tasks: vscode.Task[] = [];
-        const aurac = this.resolveBinary('aurac', 'compiler.path');
-        const auratest = this.resolveBinary('auratest', 'compiler.path');
-        const aurafmt = this.resolveBinary('aurafmt', 'compiler.path');
+        const aurac = resolveBinary('aurac', 'compiler.path');
+        const auratestTool = resolveAuraTool('auratest');
+        const aurafmtTool = resolveAuraTool('aurafmt');
+
+        const auratestCmd = auratestTool.prefixArgs.length > 0
+            ? `${auratestTool.executable} ${auratestTool.prefixArgs.join(' ')}`
+            : auratestTool.executable;
+
+        const aurafmtCmd = aurafmtTool.prefixArgs.length > 0
+            ? `${aurafmtTool.executable} ${aurafmtTool.prefixArgs.join(' ')}`
+            : aurafmtTool.executable;
 
         // 1. Build Standalone Native (Cranelift)
         const buildNativeTask = new vscode.Task(
@@ -74,18 +83,48 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         );
         tasks.push(runTask);
 
-        // 6. Test Suite Task
+        // 6. Interactive Step Debugger Task
+        const stepTask = new vscode.Task(
+            { type: AuraTaskProvider.AuraType, command: 'step' },
+            vscode.TaskScope.Workspace,
+            'Step Debug Active File (aurac step)',
+            'aura',
+            new vscode.ShellExecution(`${aurac} step "\${file}"`)
+        );
+        tasks.push(stepTask);
+
+        // 7. Test Suite Task
         const testTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'test' },
             vscode.TaskScope.Workspace,
             'Run Test Suite (auratest / aurac test)',
             'aura',
-            new vscode.ShellExecution(`${auratest} -v`)
+            new vscode.ShellExecution(`${auratestCmd} -v`)
         );
         testTask.group = vscode.TaskGroup.Test;
         tasks.push(testTask);
 
-        // 7. Benchmarks Task
+        // 8. Test Suite with Coverage Task
+        const testCoverageTask = new vscode.Task(
+            { type: AuraTaskProvider.AuraType, command: 'test-coverage' },
+            vscode.TaskScope.Workspace,
+            'Run Test Suite with Code Coverage (auratest -cover)',
+            'aura',
+            new vscode.ShellExecution(`${auratestCmd} -v -cover`)
+        );
+        tasks.push(testCoverageTask);
+
+        // 9. Generate HTML Coverage Report Task
+        const testCoverageHtmlTask = new vscode.Task(
+            { type: AuraTaskProvider.AuraType, command: 'coverage-html' },
+            vscode.TaskScope.Workspace,
+            'Generate HTML Coverage Report (auratest --coverage-html coverage.html)',
+            'aura',
+            new vscode.ShellExecution(`${auratestCmd} --coverage-html coverage.html`)
+        );
+        tasks.push(testCoverageHtmlTask);
+
+        // 10. Benchmarks Task
         const benchTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'bench' },
             vscode.TaskScope.Workspace,
@@ -95,27 +134,27 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         );
         tasks.push(benchTask);
 
-        // 8. Format Workspace Task
+        // 11. Format Workspace Task
         const fmtTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'format' },
             vscode.TaskScope.Workspace,
             'Format Workspace (aurafmt -w .)',
             'aura',
-            new vscode.ShellExecution(`${aurafmt} -w .`)
+            new vscode.ShellExecution(`${aurafmtCmd} -w .`)
         );
         tasks.push(fmtTask);
 
-        // 9. Format Active File Task
+        // 12. Format Active File Task
         const fmtFileTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'format-file' },
             vscode.TaskScope.Workspace,
             'Format Active File (aurafmt -w ${file})',
             'aura',
-            new vscode.ShellExecution(`${aurafmt} -w "\${file}"`)
+            new vscode.ShellExecution(`${aurafmtCmd} -w "\${file}"`)
         );
         tasks.push(fmtFileTask);
 
-        // 10. Module Tidy Task
+        // 13. Module Tidy Task
         const modTidyTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'mod-tidy' },
             vscode.TaskScope.Workspace,
@@ -125,7 +164,7 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         );
         tasks.push(modTidyTask);
 
-        // 11. Module Verify Task
+        // 14. Module Verify Task
         const modVerifyTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'mod-verify' },
             vscode.TaskScope.Workspace,
@@ -135,7 +174,7 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         );
         tasks.push(modVerifyTask);
 
-        // 12. Module Vendor Task
+        // 15. Module Vendor Task
         const modVendorTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'mod-vendor' },
             vscode.TaskScope.Workspace,
@@ -145,11 +184,11 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         );
         tasks.push(modVendorTask);
 
-        // 13. Live Watch Task
+        // 16. Live Watch Task
         const watchTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'watch' },
             vscode.TaskScope.Workspace,
-            'Start Live Watch & Recompile Mode (aurac watch)',
+            'Live Recompilation Watch Mode (aurac watch --run)',
             'aura',
             new vscode.ShellExecution(`${aurac} watch "\${file}" --run`)
         );
