@@ -202,7 +202,7 @@ Accesibles desde **Terminal > Run Task...**:
 
 ## 2. Extensión para Antigravity IDE (`/antigravity`)
 
-La extensión para **Google Antigravity IDE** (`aura-antigravity`, v0.1.0) expande las funciones de VS Code integrando flujos con agentes de Inteligencia Artificial:
+La extensión para **Google Antigravity IDE** (`aura-antigravity`, v0.2.0) expande las funciones de VS Code integrando flujos con agentes de Inteligencia Artificial:
 
 ### Comandos de IA Disponibles:
 1. **Aura AI: Generate Tests (`auratest`)**: Genera suites completas de pruebas unitarias y benchmarks con `@test`, `assert_eq` y casos de borde.

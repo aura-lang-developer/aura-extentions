@@ -2,7 +2,7 @@
   "name": "aura-antigravity",
   "displayName": "Aura Language Support for Antigravity IDE",
   "description": "First-class language support, rich LSP, snippets, problem matchers, and commands for Aura in Antigravity IDE",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "icon": "images/icon.png",
   "publisher": "aura-lang",
   "repository": {
