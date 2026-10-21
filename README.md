@@ -199,16 +199,22 @@ El archivo [debug.ts](file:///Users/mavro/Projects/AuraProjects/editors/vscode/s
 
 ---
 
-### 1.4 Test Explorer Nativo (`src/testController.ts`)
+### 1.4 Test Explorer Nativo y CodeLens (`src/testController.ts`, `src/codeLens.ts`)
 
-El archivo [testController.ts](file:///Users/mavro/Projects/AuraProjects/editors/vscode/src/testController.ts) integra la API oficial `vscode.TestController`.
+El archivo [testController.ts](file:///Users/mavro/Projects/AuraProjects/editors/vscode/src/testController.ts) y [codeLens.ts](file:///Users/mavro/Projects/AuraProjects/editors/vscode/src/codeLens.ts) integran la API oficial `vscode.TestController` y `vscode.CodeLensProvider`.
 
 #### Componentes:
 * **`createAuraTestController(context, resolveBinary)`**: Crea el controlador `"auraTestController"`.
 * **Descubrimiento Reactivo (`discoverTests`)**:
   - Utiliza `vscode.workspace.findFiles('**/*_test.aura')` para indexar archivos de test.
-  - Escanea cada archivo en busca de funciones de prueba con el patrón `fn (test_[a-zA-Z0-9_]+)`.
-  - Construye una jerarquía de árbol en la pestaña de Testing de VS Code, permitiendo ejecutar archivos enteros o pruebas individuales.
+  - Escanea cada archivo en busca de funciones de prueba estándar y Go-style: `test_*`, `Test*`, `benchmark_*`, `Benchmark*`.
+  - Construye una jerarquía de árbol en la pestaña de Testing de VS Code, permitiendo ejecutar archivos enteros o pruebas individuales con `-run` y `-bench`.
+* **CodeLens Interactivo en Archivos de Test**:
+  - Muestra un botón `$(beaker) Run File Tests` al inicio de cualquier archivo `*_test.aura`.
+  - Muestra botones individuales `$(play) Run Test` o `$(dashboard) Run Benchmark` directamente sobre cada función de prueba.
+* **Ejecución Inteligente de Archivos (`aura.runActiveFile` / `aura.runActiveTestFile`)**:
+  - Detecta automáticamente si el archivo activo termina en `_test.aura` y lo ejecuta con `auratest -v` en lugar del compilador base `aurac run`.
+  - Provee botones dedicados en la barra de herramientas del editor (`editor/title`), menú contextual del editor y del explorador.
 * **Vigilante en Tiempo Real (`FileSystemWatcher`)**: Detecta adiciones, cambios o eliminaciones de archivos `*_test.aura` y actualiza el árbol automáticamente.
 * **Ejecución con `auratest`**: Lanza el binario `auratest` en un subproceso (`spawn`), capturando `stdout` y `stderr` y reportando de forma interactiva en la UI si el test pasó (`run.passed`), falló (`run.failed` con el mensaje de aserción exacto) o arrojó un error (`run.errored`).
 
@@ -223,6 +229,7 @@ El archivo [taskProvider.ts](file:///Users/mavro/Projects/AuraProjects/editors/v
 | **Build Active File** | `aurac build "${file}" --standalone` | Build (Default) | `$aurac` |
 | **Type Check Active File** | `aurac check "${file}"` | Build | `$aurac` |
 | **Run Test Suite** | `auratest` | Test | N/A |
+| **Run Active Test File (*_test.aura)** | `auratest -v "${file}"` | Test | `$aurac` |
 | **Format Workspace** | `aurafmt -w .` | None | N/A |
 
 El problem matcher `$aurac` procesa la salida de errores sintácticos y de tipos de `aurac`, colocando automáticamente subrayados rojos y entradas en el panel **Problems** de VS Code.
@@ -367,6 +374,7 @@ Define los pares equilibrados de apertura y cierre: `{}`, `()`, `[]`.
 * **[tasks.json](file:///Users/mavro/Projects/AuraProjects/editors/zed/tasks.json)**:
   Integra comandos accesibles desde la paleta `task: spawn`:
   - `Aura: Run Active File` (`aurac run "$ZED_FILE"`)
+  - `Aura: Run Active Test File (*_test.aura)` (`auratest -v "$ZED_FILE"`)
   - `Aura: Type Check Active File` (`aurac check "$ZED_FILE"`)
   - `Aura: Build Standalone Binary` (`aurac build "$ZED_FILE" --standalone`)
   - `Aura: Run Test Suite (auratest)` (`auratest`)
@@ -376,7 +384,7 @@ Define los pares equilibrados de apertura y cierre: `{}`, `()`, `[]`.
 
 ## 4. Configuración para Neovim (`/nvim`)
 
-Para los usuarios del ecosistema terminal y modal, el archivo [nvim/aura.lua](file:///Users/mavro/Projects/AuraProjects/editors/nvim/aura.lua) provee una configuración concisa y nativa en Lua lista para incluir en `init.lua`.
+Para los usuarios del ecosistema terminal y modal, el archivo [nvim/aura.lua](file:///Users/mavro/Projects/AuraProjects/editors/nvim/aura.lua) provee una configuración concisa y nativa en Lua lista para incluir en `init.lua`, con soporte integrado para ejecutar archivos `*_test.aura` y suites de pruebas:
 
 ```lua
 -- 1. Registro del filetype .aura
@@ -403,7 +411,33 @@ if not configs.auralsp then
   }
 end
 
--- 3. Vinculación y atajos de teclado
+-- 3. Funciones de ejecución y comandos de prueba (*_test.aura)
+local function run_aura_file()
+  local file = vim.fn.expand("%:p")
+  if file == "" then return end
+  if file:match("_test%.aura$") then
+    vim.cmd("split | terminal auratest -v " .. vim.fn.shellescape(file))
+  else
+    vim.cmd("split | terminal aurac run " .. vim.fn.shellescape(file))
+  end
+end
+
+local function run_aura_test_file()
+  local file = vim.fn.expand("%:p")
+  if file ~= "" then
+    vim.cmd("split | terminal auratest -v " .. vim.fn.shellescape(file))
+  end
+end
+
+local function run_aura_test_suite()
+  vim.cmd("split | terminal auratest")
+end
+
+vim.api.nvim_create_user_command("AuraRun", run_aura_file, { desc = "Run active Aura file (or tests if *_test.aura)" })
+vim.api.nvim_create_user_command("AuraTest", run_aura_test_file, { desc = "Run active Aura test file with auratest" })
+vim.api.nvim_create_user_command("AuraTestSuite", run_aura_test_suite, { desc = "Run all Aura project tests with auratest" })
+
+-- 4. Vinculación y atajos de teclado
 lspconfig.auralsp.setup({
   on_attach = function(client, bufnr)
     local opts = { noremap = true, silent = true, buffer = bufnr }
@@ -412,6 +446,9 @@ lspconfig.auralsp.setup({
     vim.keymap.set("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, opts)
     vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
     vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+    vim.keymap.set("n", "<leader>r", run_aura_file, opts)
+    vim.keymap.set("n", "<leader>tr", run_aura_test_file, opts)
+    vim.keymap.set("n", "<leader>ts", run_aura_test_suite, opts)
   end,
 })
 ```

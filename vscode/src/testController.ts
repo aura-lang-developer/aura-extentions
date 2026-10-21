@@ -45,7 +45,20 @@ export function createAuraTestController(
 
                 run.started(test);
                 const testFilePath = test.uri?.fsPath;
-                const args = testFilePath ? [testFilePath] : [];
+                const args: string[] = ['-v'];
+
+                if (test.parent) {
+                    const isBench = test.label.startsWith('benchmark_') || test.label.startsWith('Benchmark');
+                    if (isBench) {
+                        args.push('-bench', test.label);
+                    } else {
+                        args.push('-run', test.label);
+                    }
+                }
+
+                if (testFilePath) {
+                    args.push(testFilePath);
+                }
 
                 await new Promise<void>((resolve) => {
                     const proc = spawn(auratest, args, { cwd: workspaceFolder });
@@ -61,6 +74,9 @@ export function createAuraTestController(
 
                         if (code === 0) {
                             run.passed(test);
+                            if (!test.parent && test.children.size > 0) {
+                                test.children.forEach(child => run.passed(child));
+                            }
                         } else {
                             run.failed(test, new vscode.TestMessage(stderr || stdout || `Test exited with code ${code}`));
                         }
@@ -103,7 +119,7 @@ async function discoverTests(controller: vscode.TestController) {
 
             testItem.children.replace([]);
             lines.forEach((line, index) => {
-                const match = line.match(/^\s*(?:export\s+)?fn\s+(test_[a-zA-Z0-9_]+)/);
+                const match = line.match(/^\s*(?:export\s+)?fn\s+((?:test_|Test|benchmark_|Benchmark)[a-zA-Z0-9_]*)/);
                 if (match) {
                     const testName = match[1];
                     const childId = `${id}::${testName}`;

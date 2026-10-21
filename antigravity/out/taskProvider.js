@@ -28,6 +28,10 @@ class AuraTaskProvider {
         const testTask = new vscode.Task({ type: AuraTaskProvider.AuraType, command: 'test' }, vscode.TaskScope.Workspace, 'Run Test Suite', 'aura', new vscode.ShellExecution(`${auratest}`));
         testTask.group = vscode.TaskGroup.Test;
         tasks.push(testTask);
+        // 3b. Run Active Test File Task
+        const testFileTask = new vscode.Task({ type: AuraTaskProvider.AuraType, command: 'test-file' }, vscode.TaskScope.Workspace, 'Run Active Test File (*_test.aura)', 'aura', new vscode.ShellExecution(`${auratest} -v "\${file}"`), ['$aurac']);
+        testFileTask.group = vscode.TaskGroup.Test;
+        tasks.push(testFileTask);
         // 4. Format Task
         const fmtTask = new vscode.Task({ type: AuraTaskProvider.AuraType, command: 'format' }, vscode.TaskScope.Workspace, 'Format Workspace (aurafmt)', 'aura', new vscode.ShellExecution(`${aurafmt} -w .`));
         tasks.push(fmtTask);

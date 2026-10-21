@@ -53,6 +53,18 @@ export class AuraTaskProvider implements vscode.TaskProvider {
         testTask.group = vscode.TaskGroup.Test;
         tasks.push(testTask);
 
+        // 3b. Run Active Test File Task
+        const testFileTask = new vscode.Task(
+            { type: AuraTaskProvider.AuraType, command: 'test-file' },
+            vscode.TaskScope.Workspace,
+            'Run Active Test File (*_test.aura)',
+            'aura',
+            new vscode.ShellExecution(`${auratest} -v "\${file}"`),
+            ['$aurac']
+        );
+        testFileTask.group = vscode.TaskGroup.Test;
+        tasks.push(testFileTask);
+
         // 4. Format Task
         const fmtTask = new vscode.Task(
             { type: AuraTaskProvider.AuraType, command: 'format' },

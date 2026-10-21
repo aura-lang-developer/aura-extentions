@@ -1,0 +1,5 @@
+/Users/mavro/Projects/AuraProjects/editors/zed/target/debug/build/proc-macro2-5191bf176163d1c9/build_script_build-5191bf176163d1c9.d: /Users/mavro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107/build.rs
+
+/Users/mavro/Projects/AuraProjects/editors/zed/target/debug/build/proc-macro2-5191bf176163d1c9/build_script_build-5191bf176163d1c9: /Users/mavro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107/build.rs
+
+/Users/mavro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.107/build.rs:

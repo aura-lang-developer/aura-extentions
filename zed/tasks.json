@@ -24,6 +24,12 @@
     "allow_concurrent_runs": false
   },
   {
+    "label": "Aura: Run Active Test File (auratest)",
+    "command": "auratest -v \"$ZED_FILE\"",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
     "label": "Aura: Format Workspace (aurafmt)",
     "command": "aurafmt -w .",
     "use_new_terminal": false,

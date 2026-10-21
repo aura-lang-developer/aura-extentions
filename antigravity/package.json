@@ -245,6 +245,15 @@
         "icon": "$(play)"
       },
       {
+        "command": "aura.runActiveTestFile",
+        "title": "Aura: Run Active Test File (auratest)",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "aura.runSingleTest",
+        "title": "Aura: Run Test Function"
+      },
+      {
         "command": "aura.debugActiveFile",
         "title": "Aura: Debug Active File",
         "icon": "$(debug-alt)"
@@ -351,9 +360,14 @@
       ],
       "editor/title": [
         {
+          "command": "aura.runActiveTestFile",
+          "group": "navigation@1",
+          "when": "resourceFilename =~ /.*_test\\.aura$/"
+        },
+        {
           "command": "aura.runActiveFile",
           "group": "navigation@1",
-          "when": "resourceExtname == .aura"
+          "when": "resourceExtname == .aura && !(resourceFilename =~ /.*_test\\.aura$/)"
         },
         {
           "command": "aura.debugActiveFile",
@@ -368,9 +382,14 @@
       ],
       "editor/context": [
         {
+          "command": "aura.runActiveTestFile",
+          "group": "1_aura@1",
+          "when": "resourceFilename =~ /.*_test\\.aura$/"
+        },
+        {
           "command": "aura.runActiveFile",
           "group": "1_aura@1",
-          "when": "resourceExtname == .aura"
+          "when": "resourceExtname == .aura && !(resourceFilename =~ /.*_test\\.aura$/)"
         },
         {
           "command": "aura.debugActiveFile",
@@ -421,6 +440,18 @@
           "command": "aura.ai.visualizeArchitecture",
           "group": "2_aura_ai@5",
           "when": "resourceExtname == .aura"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "aura.runActiveTestFile",
+          "group": "aura",
+          "when": "resourceFilename =~ /.*_test\\.aura$/"
+        },
+        {
+          "command": "aura.runActiveFile",
+          "group": "aura",
+          "when": "resourceExtname == .aura && !(resourceFilename =~ /.*_test\\.aura$/)"
         }
       ]
     },

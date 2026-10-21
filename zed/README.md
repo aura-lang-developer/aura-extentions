@@ -84,6 +84,7 @@ Configure `.zed/launch.json` in your workspace:
 | Command | Action | Keybinding (Zed) |
 |---|---|---|
 | `task: spawn` -> `Aura: Run Active File` | Compile and run active file with `aurac run` | `cmd-shift-p` |
+| `task: spawn` -> `Aura: Run Active Test File` | Run active test file with `auratest -v` (`*_test.aura`) | `cmd-shift-p` |
 | `task: spawn` -> `Aura: Debug Active File` | Start interactive debugger with `aurac debug` | `cmd-shift-p` |
 | `task: spawn` -> `Aura: Type Check` | Run Hindley-Milner static type check (`aurac check`) | `cmd-shift-p` |
 | `task: spawn` -> `Aura: Test Suite` | Run complete test suite (`auratest`) | `cmd-shift-p` |
