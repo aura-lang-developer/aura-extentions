@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/icon.png" width="128" height="128" alt="Aura Language Mascot" />
+</p>
+
 # Aura Language Extension for VS Code
 
 Official Visual Studio Code extension for the **Aura Language** featuring full Language Server Protocol (LSP) integration.

@@ -6,20 +6,56 @@
     "allow_concurrent_runs": false
   },
   {
+    "label": "Aura: Interactive Step Debugger (CLI)",
+    "command": "aurac step \"$ZED_FILE\"",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
     "label": "Aura: Type Check Active File",
     "command": "aurac check \"$ZED_FILE\"",
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
   {
-    "label": "Aura: Build Standalone Binary",
-    "command": "aurac build \"$ZED_FILE\" --standalone",
+    "label": "Aura: Build Standalone Native Binary (Cranelift)",
+    "command": "aurac build \"$ZED_FILE\" --target native",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Build Release Optimized (-O3, SIMD)",
+    "command": "aurac build \"$ZED_FILE\" --target native --release -O3",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Build Native Executable via Go Toolchain",
+    "command": "aurac build \"$ZED_FILE\" --target go",
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
   {
     "label": "Aura: Run Test Suite (auratest)",
-    "command": "auratest",
+    "command": "auratest -v",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Test Suite with Code Coverage",
+    "command": "auratest -cover",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Run Benchmarks (aurac test --bench)",
+    "command": "aurac test --bench",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Start Live Watch Mode",
+    "command": "aurac watch \"$ZED_FILE\" --run",
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   },
@@ -32,6 +68,24 @@
   {
     "label": "Aura: Format Workspace (aurafmt)",
     "command": "aurafmt -w .",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Tidy Module Dependencies (aurac mod tidy)",
+    "command": "aurac mod tidy",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Verify Cryptographic Hashes (aurac mod verify)",
+    "command": "aurac mod verify",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false
+  },
+  {
+    "label": "Aura: Vendor Dependencies (aurac mod vendor)",
+    "command": "aurac mod vendor",
     "use_new_terminal": false,
     "allow_concurrent_runs": false
   }

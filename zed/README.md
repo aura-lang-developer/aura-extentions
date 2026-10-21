@@ -1,91 +1,51 @@
-# Aura Language Support for Zed Editor
+<p align="center">
+  <img src="images/icon.png" width="128" height="128" alt="Aura Language Mascot" />
+</p>
+
+# 🌌 Aura Language Support for Zed Editor
 
 Official Aura Language extension for [Zed](https://zed.dev) editor.
 
-## Features
+## ✨ Features
 
 - **WebAssembly Extension API (`zed_extension_api`)**: Native WASM extension that resolves and manages `auralsp` and `aurac lsp` automatically.
 - **Language Server Protocol (`auralsp`)**: Diagnostics, Hover information, Type inference, Code completions, Go to Definition, Inlay Hints, and Call Hierarchy.
-- **Tree-sitter Syntax Highlighting (`highlights.scm`)**: Deep syntactic colorization mapped to Zed theme scopes.
-- **Symbol Outline Navigator (`outline.scm`)**: Fast jump-to-symbol (`Cmd+R` / `Ctrl+R`) index for functions, sum types, and interfaces.
-- **Intelligent Indentation & Brackets (`indents.scm`, `brackets.scm`)**: Smart auto-indent and pair matching for match expressions, blocks, and collections.
+- **Tree-sitter Syntax Highlighting (`highlights.scm`)**: Complete syntactic colorization for receiver methods, structs, packed structs, build directives (`//aura:build`), CSP channels (`<-`, `->`), and standard library modules (`http`, `sync`, `os`, `time`).
+- **Symbol Outline Navigator (`outline.scm`)**: Fast jump-to-symbol (`Cmd+R` / `Ctrl+R`) indexing structs, interfaces, sum types, and functions.
+- **Intelligent Indentation & Brackets (`indents.scm`, `brackets.scm`)**: Smart auto-indent and pair matching for match expressions, blocks, and collection literals (`#{}`, `#[ ]`).
 - **Formatting on Save**: Integrated code formatting using `aurafmt` and `auralsp`.
-- **Tasks & Execution (`tasks.json`)**: Pre-configured tasks to Run, Check, Build, and Test directly from Zed's command palette.
-- **Interactive Debugging**: Source-mapped V8 Inspector debugging with breakpoints and local variable inspection via `aurac debug` and DAP.
+- **Predefined Tasks (`tasks.json`)**: One-click tasks to Run, Check, Build Standalone Native Binaries (Cranelift), Build via Go Toolchain, Run Tests & Benchmarks, Format Workspace, and Manage Modules (`aurac mod tidy/verify/vendor`).
+- **Interactive Debugging**: Source-mapped debugging with breakpoints and local variable inspection via `aurac debug`.
 
 ---
 
-## Installation in Zed
+## 📦 Installation in Zed
 
-1. Clone or symlink this directory into your Zed extensions directory:
+1. Symlink or copy the extension directory into your Zed extensions folder:
    ```bash
    # On macOS
    mkdir -p ~/Library/Application\ Support/Zed/extensions/installed/aura
-   cp -r editors/zed/* ~/Library/Application\ Support/Zed/extensions/installed/aura/
+   cp -r zed/* ~/Library/Application\ Support/Zed/extensions/installed/aura/
    ```
-2. Ensure `aurac`, `auralsp`, `aurafmt`, and `auratest` are in your system `PATH`:
-   ```bash
-   cargo install --path .
-   ```
+2. Ensure `aurac`, `auralsp`, `aurafmt`, and `auratest` are installed on your system `PATH`.
 
 ---
 
-## Debugging Aura in Zed
+## ⚙️ Preconfigured Tasks in Zed
 
-Zed supports debugging via the **Debug Adapter Protocol (DAP)** and Node inspector.
+Open the Command Palette (`Cmd + Shift + P` or `Ctrl + Shift + P`), type **`task: spawn`**, and choose from:
 
-### Option 1: Quick Debug Task (Recommended)
-
-1. Open an `.aura` file in Zed.
-2. Press `Cmd + Shift + P` (or `Ctrl + Shift + P` on Linux) and run **`task: spawn`**.
-3. Select **`Aura: Debug Active File (Listen 9229)`**.
-4. Aura will compile your code with high-precision Source Maps V3 and start the V8 inspector:
-   ```
-   🐛 Aura Debugger initialized for 'src/main.aura'
-      ➜ V8 Inspector endpoint: 127.0.0.1:9229
-      ➜ SourceMap active: src/main.aura.debug.mjs.map
-      ➜ Status: Waiting for debugger to attach (--inspect-brk)...
-   ```
-
-### Option 2: Zed Native Debugger (`.zed/launch.json`)
-
-Configure `.zed/launch.json` in your workspace:
-
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Debug Aura Active File",
-      "type": "node",
-      "request": "launch",
-      "program": "${file}",
-      "runtimeExecutable": "aurac",
-      "runtimeArgs": ["debug", "--brk"],
-      "port": 9229,
-      "sourceMaps": true
-    },
-    {
-      "name": "Attach to Aura Debugger (Port 9229)",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "address": "127.0.0.1",
-      "sourceMaps": true
-    }
-  ]
-}
-```
-
----
-
-## Keybindings & Common Commands
-
-| Command | Action | Keybinding (Zed) |
-|---|---|---|
-| `task: spawn` -> `Aura: Run Active File` | Compile and run active file with `aurac run` | `cmd-shift-p` |
-| `task: spawn` -> `Aura: Run Active Test File` | Run active test file with `auratest -v` (`*_test.aura`) | `cmd-shift-p` |
-| `task: spawn` -> `Aura: Debug Active File` | Start interactive debugger with `aurac debug` | `cmd-shift-p` |
-| `task: spawn` -> `Aura: Type Check` | Run Hindley-Milner static type check (`aurac check`) | `cmd-shift-p` |
-| `task: spawn` -> `Aura: Test Suite` | Run complete test suite (`auratest`) | `cmd-shift-p` |
-| `editor: format` | Format current `.aura` buffer with `aurafmt` | `cmd-s` / `cmd-shift-i` |
+| Task Label | Command Executed | Description |
+| :--- | :--- | :--- |
+| **Aura: Run Active File** | `aurac run "$ZED_FILE"` | Compiles and executes current `.aura` file |
+| **Aura: Run Active Test File** | `auratest -v "$ZED_FILE"` | Run active test file (`*_test.aura`) |
+| **Aura: Type Check Active File** | `aurac check "$ZED_FILE"` | Type check without emitting binaries |
+| **Aura: Build Standalone Native Binary (Cranelift)** | `aurac build "$ZED_FILE" --target native` | Standalone machine code binary |
+| **Aura: Build Release Optimized (-O3, SIMD)** | `aurac build "$ZED_FILE" --target native --release -O3` | Max performance optimized binary |
+| **Aura: Build Native Executable via Go Toolchain** | `aurac build "$ZED_FILE" --target go` | Go toolchain single binary |
+| **Aura: Run Test Suite (auratest)** | `auratest -v` | Unit tests & test runner |
+| **Aura: Run Benchmarks** | `aurac test --bench` | Benchmark performance suite |
+| **Aura: Format Workspace (aurafmt)** | `aurafmt -w .` | Workspace code formatter |
+| **Aura: Tidy Module Dependencies** | `aurac mod tidy` | Discover & tidy `aura.mod` |
+| **Aura: Verify Cryptographic Hashes** | `aurac mod verify` | Verify `aura.lock` checksums |
+| **Aura: Vendor Dependencies** | `aurac mod vendor` | 100% offline self-contained builds |

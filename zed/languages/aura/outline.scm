@@ -3,6 +3,9 @@
 (function_declaration
   name: (identifier) @name) @item
 
+(struct_declaration
+  name: (identifier) @name) @item
+
 (sum_type_declaration
   name: (identifier) @name) @item
 

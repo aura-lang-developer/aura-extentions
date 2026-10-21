@@ -1,0 +1,139 @@
+# Aura Snipmate / LuaSnip Snippets
+
+snippet fn "Function Declaration"
+	fn ${1:name}(${2:params}): ${3:Unit} => {
+		${0}
+	}
+
+snippet export-fn "Exported Function Declaration"
+	export fn ${1:Name}(${2:params}): ${3:Unit} => {
+		${0}
+	}
+
+snippet fn-recv "Method Receiver (Value)"
+	fn (${1:self}: ${2:ReceiverType}) ${3:MethodName}(${4:params}): ${5:ReturnType} => {
+		${0}
+	}
+
+snippet fn-recv-ptr "Method Receiver (Pointer)"
+	fn (${1:self}: *${2:ReceiverType}) ${3:MethodName}(${4:params}): ${5:ReturnType} => {
+		${0}
+	}
+
+snippet main "Main Entrypoint"
+	export fn main(): Unit => {
+		println("Hello, Aura!");
+		${0}
+	}
+
+snippet let "Let Binding"
+	let ${1:name}: ${2:Type} = ${3:value};
+
+snippet letmut "Mutable Let Binding"
+	let mut ${1:name}: ${2:Type} = ${3:value};
+
+snippet struct "Struct Declaration"
+	struct ${1:Name} {
+		${2:field}: ${3:Type}
+	};
+
+snippet export-struct "Exported Struct Declaration"
+	export struct ${1:Name} {
+		${2:field}: ${3:Type}
+	};
+
+snippet packed-struct "Packed Struct (Binary Alignment)"
+	export packed struct ${1:Name} {
+		${2:field}: ${3:Type}
+	};
+
+snippet interface "Structural Interface"
+	export interface ${1:Name} {
+		${2:MethodName}(${3:param}: ${4:Type}): ${5:ReturnType};
+	}
+
+snippet match "Pattern Match"
+	match ${1:expr} {
+		${2:Pattern} => {
+			${0}
+		},
+		_ => {
+		}
+	}
+
+snippet for "For in Loop"
+	for ${1:item} in ${2:iterable} {
+		${0}
+	}
+
+snippet for-idx "For in Loop with Index"
+	for ${1:index}, ${2:item} in ${3:iterable} {
+		${0}
+	}
+
+snippet while "While Loop"
+	while ${1:condition} {
+		${0}
+	}
+
+snippet defer "Defer Statement"
+	defer ${1:resource.close()};
+
+snippet errdefer "Errdefer Statement"
+	errdefer ${1:cleanupOnFailure()};
+
+snippet spawn "CSP Fiber Spawn"
+	spawn {
+		${0}
+	};
+
+snippet channel "Channel Creation"
+	let ${1:ch} = Channel.new(${2:10});
+
+snippet select "Select Multiplexing"
+	select {
+		case ${1:msg} <- ${2:channel} => {
+			${0}
+		},
+		default => {
+		}
+	}
+
+snippet embed "Embed Static Text"
+	let ${1:asset} = embed("${2:path/to/asset.txt}");
+
+snippet embedBytes "Embed Static Binary"
+	let ${1:bytes} = embedBytes("${2:path/to/binary.bin}");
+
+snippet build-tag "Build Tag Directive"
+	//aura:build ${1:darwin || linux}
+
+snippet http-server "HTTP Server with ServeMux"
+	let mux = http.newServeMux();
+
+	mux.get("/api/health", fn(req: Any, res: Any) => {
+		http.json(res, http.StatusOK, { status: "ok", timestamp: time.now() });
+	});
+
+	let port = os.env("PORT") != "" ? os.env("PORT") : "8080";
+	println(\`🚀 Server listening on :\${port}\`);
+	// mux.listenAndServe(\`:\${port}\`);
+
+snippet sync-mutex "Sync Mutex"
+	let ${1:mu} = Mutex.new();
+	${1:mu}.lock();
+	defer ${1:mu}.unlock();
+	${0}
+
+snippet test "Unit Test Case"
+	@test
+	fn test_${1:feature}(): Unit => {
+		let result = ${2:call()};
+		assert_eq(result, ${3:expected});
+	}
+
+snippet bench "Benchmark Test"
+	@bench
+	fn bench_${1:operation}(): Unit => {
+		${0}
+	}

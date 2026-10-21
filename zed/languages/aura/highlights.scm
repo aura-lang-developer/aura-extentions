@@ -1,66 +1,115 @@
 ; Tree-sitter syntax highlighting queries for Aura Language in Zed
 
-; Keywords
+; 1. Keywords
 [
   "fn"
   "let"
   "mut"
+  "const"
   "type"
   "interface"
+  "trait"
+  "impl"
+  "struct"
+  "packed"
+  "module"
+  "import"
+  "export"
+  "from"
+  "as"
+  "extern"
+  "embed"
+  "embedBytes"
   "match"
   "when"
   "if"
   "else"
+  "while"
+  "for"
+  "in"
+  "break"
+  "continue"
+  "return"
+  "defer"
+  "errdefer"
+  "panic"
+  "recover"
+  "spawn"
+  "routine"
+  "go"
+  "select"
+  "case"
+  "default"
+] @keyword
+
+; 2. Concurrency & Async
+[
   "async"
   "await"
   "spawn"
   "routine"
   "go"
-  "select"
-  "default"
-  "while"
-  "for"
-  "in"
-  "defer"
-  "errdefer"
-  "import"
-  "export"
-  "from"
-  "extern"
-  "return"
-  "break"
-  "continue"
-  "panic"
-  "recover"
-  "struct"
-  "packed"
-] @keyword
+] @keyword.control
 
-; Built-in Boolean and Unit Literals
+; 3. Built-in Boolean and Unit Literals
 [
   "true"
   "false"
 ] @boolean
 
-; Primitive Types
+[
+  "self"
+  "Self"
+  "this"
+  "super"
+] @variable.special
+
+; 4. Primitive Types
 [
   "Int"
   "Float"
   "String"
   "Bool"
   "Unit"
+  "Byte"
+  "Char"
+  "Any"
+  "Never"
+  "Void"
+] @type.builtin
+
+; 5. Core Standard Library Types
+[
   "Option"
   "Result"
+  "Some"
+  "None"
+  "Ok"
+  "Err"
   "Task"
   "Channel"
+  "SendChannel"
+  "RecvChannel"
+  "Context"
+  "WaitGroup"
+  "Mutex"
+  "RWMutex"
+  "Once"
+  "Pool"
+  "Server"
+  "Request"
+  "Response"
+  "ServeMux"
+  "Handler"
+  "Iterator"
+  "Error"
   "List"
   "Array"
   "Map"
   "Set"
-  "Iterator"
 ] @type.builtin
 
-; Functions
+; 6. Functions & Method Declarations
 (function_declaration
   name: (identifier) @function)
 
@@ -71,7 +120,10 @@
   function: (member_expression
     property: (identifier) @function.method))
 
-; Types & Sum Types
+; 7. Types, Structs & Sum Types
+(struct_declaration
+  name: (identifier) @type)
+
 (type_declaration
   name: (identifier) @type)
 
@@ -84,7 +136,7 @@
 (interface_declaration
   name: (identifier) @type)
 
-; Variables and Parameters
+; 8. Variables and Parameters
 (parameter
   name: (identifier) @variable.parameter)
 
@@ -93,18 +145,19 @@
 
 (identifier) @variable
 
-; Literals
+; 9. Literals
 (number) @number
 (string) @string
 (template_string) @string
 (escape_sequence) @string.escape
 
-; Operators
+; 10. Operators
 [
   "|>"
   "<-"
   "->"
   "=>"
+  "::"
   "=="
   "!="
   "<="
@@ -121,16 +174,19 @@
   "?"
   "|"
   "&"
+  "^"
   "<"
   ">"
+  "..."
+  ".."
 ] @operator
 
-; Comments
+; 11. Comments & Directives
 (comment) @comment
 (line_comment) @comment
 (block_comment) @comment
 
-; Punctuation
+; 12. Punctuation
 [
   "{"
   "}"

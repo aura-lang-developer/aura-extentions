@@ -20,6 +20,13 @@ impl zed::Extension for AuraExtension {
                 env: Default::default(),
             });
         }
+        if let Some(path) = worktree.which("target/debug/auralsp") {
+            return Ok(zed::Command {
+                command: path,
+                args: vec![],
+                env: Default::default(),
+            });
+        }
 
         // 2. Check for auralsp on system PATH
         if let Some(path) = worktree.which("auralsp") {

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/icon.png" width="128" height="128" alt="Aura Language Mascot" />
+</p>
+
 # 🌟 Aura Language Support for Antigravity IDE
 
 Official extension for **Aura Language** (`aurac`) tailored for **Google Antigravity IDE** and VS Code.
@@ -45,11 +49,11 @@ Combines high-performance Language Server Protocol (LSP) intelligence with Antig
 1. Open Antigravity IDE.
 2. Open the Command Palette (`⌘+Shift+P` / `Ctrl+Shift+P`).
 3. Select **Extensions: Install from VSIX...**
-4. Pick the built `aura-antigravity-0.1.0.vsix` file located in `editors/antigravity/`.
+4. Pick the built `aura-antigravity-0.2.0.vsix` file located in `antigravity/`.
 
 ### Option 2: Command Line Installation
 ```bash
-antigravity --install-extension editors/antigravity/aura-antigravity-0.1.0.vsix
+antigravity --install-extension antigravity/aura-antigravity-0.2.0.vsix
 ```
 
 ---
