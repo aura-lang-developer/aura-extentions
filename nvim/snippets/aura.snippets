@@ -137,3 +137,113 @@ snippet bench "Benchmark Test"
 	fn bench_${1:operation}(): Unit => {
 		${0}
 	}
+
+snippet test-go "Go-Style Test Function"
+	fn Test${1:Feature}(t: *testing.T) => {
+		t.Helper();
+		let got = ${2:call()};
+		let want = ${3:expected};
+		if (got != want) {
+			t.Errorf("${1:Feature}() = %v, want %v", got, want);
+		}
+	}
+
+snippet test-table "Go-Style Table Driven Test"
+	fn Test${1:Feature}TableDriven(t: *testing.T) => {
+		let tests = [
+			{ name: "${2:case1}", input: ${3:value}, want: ${4:expected} },
+		];
+
+		for tc in tests {
+			t.Run(tc.name, fn(t: *testing.T) => {
+				t.Parallel();
+				let got = ${5:call(tc.input)};
+				if (got != tc.want) {
+					t.Fatalf("got %v, want %v", got, tc.want);
+				}
+			});
+		}
+	}
+
+snippet bench-go "Go-Style Benchmark"
+	fn Benchmark${1:Operation}(b: *testing.B) => {
+		b.ReportAllocs();
+		b.ResetTimer();
+		for (let mut i = 0; i < b.N; i = i + 1) {
+			${2:Operation()};
+		}
+	}
+
+snippet example "Go-Style Example Function"
+	fn Example${1:Feature}() => {
+		println(${2:call()});
+		// Output:
+		// ${3:expected_output}
+	}
+
+snippet db-pg "PostgreSQL Database Connection"
+	import { connect } from "pg";
+
+	let db = pg.connect("postgres://${1:user}:${2:password}@${3:localhost}:5432/${4:mydb}?sslmode=disable")?;
+	defer db.close();
+
+	let rows = db.query("SELECT id, name FROM users WHERE active = $1", [true])?;
+	defer rows.close();
+
+	for row in rows {
+		println(\`User: \${row.id} - \${row.name}\`);
+	}
+
+snippet db-mysql "MySQL Database Connection"
+	import { connect } from "mysql";
+
+	let db = mysql.connect("${1:user}:${2:password}@tcp(${3:localhost}:3306)/${4:mydb}")?;
+	defer db.close();
+
+	let rows = db.query("SELECT id, title FROM items")?;
+	defer rows.close();
+
+snippet redis-client "Redis Cache Client"
+	import { connect } from "redis";
+
+	let rdb = redis.connect("redis://${1:localhost}:6379")?;
+	defer rdb.close();
+
+	rdb.set("${2:key}", "${3:value}", 3600);
+	let val = rdb.get("${2:key}");
+	println(\`Redis val: \${val}\`);
+
+snippet mongo-client "MongoDB Client"
+	import { connect } from "mongo";
+
+	let client = mongo.connect("mongodb://${1:localhost}:27017")?;
+	defer client.close();
+
+	let col = client.database("${2:mydb}").collection("${3:users}");
+	col.insertOne({ name: "${4:Alice}", role: "admin" });
+
+snippet csp-worker-pool "CSP Worker Pool"
+	import { WaitGroup } from "sync";
+
+	let jobs = Channel.new<Int>(100);
+	let results = Channel.new<Int>(100);
+	let wg = WaitGroup.new();
+
+	for w in 1..=${1:4} {
+		wg.add(1);
+		spawn {
+			defer wg.done();
+			for j in jobs {
+				results <- (j * 2);
+			}
+		};
+	}
+
+	spawn {
+		for j in 1..=${2:10} {
+			jobs <- j;
+		}
+		jobs.close();
+		wg.wait();
+		results.close();
+	};

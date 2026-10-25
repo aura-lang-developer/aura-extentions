@@ -66,15 +66,18 @@ export function resolveAuraTool(toolName: 'auralsp' | 'auratest' | 'aurafmt' | '
         return { executable: directBin, prefixArgs: [] };
     }
 
-    // Fallback logic to aurac
+    // Fallback logic to aura or aurac
     if (toolName !== 'aurac') {
+        const aura = resolveBinary('aura', 'compiler.path');
         const aurac = resolveBinary('aurac', 'compiler.path');
+        const compilerBin = fs.existsSync(aura) ? aura : aurac;
+
         const subcommand = toolName === 'auralsp' ? 'lsp' :
                            toolName === 'auratest' ? 'test' :
                            toolName === 'aurafmt' ? 'fmt' : '';
 
         return {
-            executable: aurac,
+            executable: compilerBin,
             prefixArgs: subcommand ? [subcommand] : []
         };
     }

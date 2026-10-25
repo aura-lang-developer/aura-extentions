@@ -37,7 +37,15 @@ impl zed::Extension for AuraExtension {
             });
         }
 
-        // 3. Fallback to aurac lsp on PATH
+        // 3. Fallback to aura or aurac lsp on PATH
+        if let Some(path) = worktree.which("aura") {
+            return Ok(zed::Command {
+                command: path,
+                args: vec!["lsp".to_string()],
+                env: Default::default(),
+            });
+        }
+
         if let Some(path) = worktree.which("aurac") {
             return Ok(zed::Command {
                 command: path,

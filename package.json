@@ -14,6 +14,11 @@
     "check:antigravity": "npm run compile:antigravity",
     "check:zed": "cd zed && cargo check",
     "check:all": "npm run check:vscode && npm run check:antigravity && npm run check:zed",
-    "build:all": "npm run compile && npm run check:zed"
+    "build:all": "npm run compile && npm run check:zed",
+    "install:all": "./install.sh --all",
+    "install:vscode": "./install.sh --vscode",
+    "install:antigravity": "./install.sh --antigravity",
+    "install:zed": "./install.sh --zed",
+    "install:nvim": "./install.sh --nvim"
   }
 }

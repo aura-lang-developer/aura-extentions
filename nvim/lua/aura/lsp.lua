@@ -34,14 +34,17 @@ local function resolve_lsp_command(options)
     home .. "/.aura/bin/auralsp",
     "/opt/homebrew/bin/auralsp",
     "/usr/local/bin/auralsp",
+    home .. "/.cargo/bin/aura",
     home .. "/.cargo/bin/aurac",
+    "/opt/homebrew/bin/aura",
     "/opt/homebrew/bin/aurac",
+    "/usr/local/bin/aura",
     "/usr/local/bin/aurac",
   }
 
   for _, candidate in ipairs(candidates) do
     if vim.fn.executable(candidate) == 1 then
-      if candidate:match("aurac$") then
+      if candidate:match("aura$") or candidate:match("aurac$") then
         return { candidate, "lsp" }
       end
       return { candidate }
@@ -51,6 +54,10 @@ local function resolve_lsp_command(options)
   -- Check system PATH
   if vim.fn.executable("auralsp") == 1 then
     return { "auralsp" }
+  end
+
+  if vim.fn.executable("aura") == 1 then
+    return { "aura", "lsp" }
   end
 
   if vim.fn.executable("aurac") == 1 then

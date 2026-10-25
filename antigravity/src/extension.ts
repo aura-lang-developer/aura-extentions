@@ -7,6 +7,8 @@ import {
     TransportKind
 } from 'vscode-languageclient/node';
 import { AuraHoverProvider, AuraDefinitionProvider } from './hover';
+import { AuraCompletionItemProvider } from './completion';
+import { AuraSignatureHelpProvider } from './signatureHelp';
 import { AuraDebugConfigurationProvider } from './debug';
 import { createAuraTestController } from './testController';
 import { AuraTaskProvider } from './taskProvider';
@@ -64,10 +66,12 @@ export function activate(context: vscode.ExtensionContext) {
     updateStatusBar('starting');
     statusBarItem.show();
 
-    // Register Rich Contextual Hover and Go to Definition Providers
+    // Register Rich Contextual Hover, Go to Definition, Completion and Signature Help Providers
     context.subscriptions.push(
         vscode.languages.registerHoverProvider('aura', new AuraHoverProvider()),
-        vscode.languages.registerDefinitionProvider('aura', new AuraDefinitionProvider())
+        vscode.languages.registerDefinitionProvider('aura', new AuraDefinitionProvider()),
+        vscode.languages.registerCompletionItemProvider('aura', new AuraCompletionItemProvider(), '.', ':', '"', '/', '<'),
+        vscode.languages.registerSignatureHelpProvider('aura', new AuraSignatureHelpProvider(), '(', ',')
     );
 
     // Register Aura Debug Configuration Provider

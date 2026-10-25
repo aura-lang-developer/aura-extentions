@@ -168,18 +168,31 @@ La extensión para VS Code (`aura-vscode`, v0.2.0) ofrece una suite completa de 
 - **Colecciones Literales**: Mapas asociativos `#{ "key" => value }` y conjuntos `#[ 1, 2 ]`.
 - **Archivos de Módulo y Bloqueo**: Resaltado dedicado para `aura.mod` (`source.auramod`) y `aura.lock` (`source.auralock`).
 
-### 1.2 Catálogo de Documentación y Go To Definition (`src/hover.ts`)
-- Más de 1,500 líneas de catálogo técnico detallando palabras clave, operadores funcionales (`|>`, `<-`, `=>`, `?`), tipos nativos (`Int`, `Float`, `Channel`, `Mutex`, `ServeMux`, `Context`) y módulos de la biblioteca estándar (`http`, `sync`, `os`, `time`, `json`).
-- Análisis estático del código del proyecto en tiempo real para saltar con `F12` a declaraciones de structs, funciones receptoras y módulos importados.
+### 1.2 Catálogo de Documentación, Ayuda de Firmas y Go To Definition (`src/hover.ts`, `src/signatureHelp.ts`)
+- **Catálogo Técnico Exhaustivo**: Más de 1,500 líneas de documentación interactiva detallando palabras clave, operadores funcionales (`|>`, `<-`, `=>`, `?`), tipos nativos (`Int`, `Float`, `Channel`, `Mutex`, `ServeMux`, `Context`) y módulos de la biblioteca estándar (`http`, `sync`, `os`, `time`, `json`, `pg`, `mysql`, `redis`, `mongo`, `sqlite`).
+- **Signature Help Interactivo (`AuraSignatureHelpProvider`)**: Al escribir `(` o `,` tras una función nativa, constructores de estructuras o métodos de test (`println`, `len`, `make`, `assert`, `Channel.new`, `Response.json`, `t.Errorf`, `t.Run`), despliega el desglose del parámetro activo, tipo y documentación.
+- **Go To Definition (`F12`)**: Análisis estático en tiempo real para saltar directamente a declaraciones de structs, funciones receptoras y módulos importados relativos (`./types`, etc.).
 
-### 1.3 Test Controller, CodeLens y Ejecución de Pruebas (`src/testController.ts`, `src/codeLens.ts`)
+### 1.3 Autocompletado Rico y Snippets de Productividad (`src/completion.ts`, `snippets/aura.json`)
+- **Completado Contextual de Código (`AuraCompletionItemProvider`)**: Autocompleta palabras clave, tipos base, constructores y métodos con documentación Markdown y snippets embebidos.
+- **Sugerencias Automáticas de Módulos**: Detecta `import { ... } from "..."` y ofrece sugerencias instantáneas para toda la biblioteca estándar (`net/http`, `sync`, `time`, `json`, `database/sql`, `pg`, `redis`, `mongo`, `testing`).
+- **Completado para Testing Go-Style**: Sugerencias inmediatas de métodos de `*testing.T` y `*testing.B` (`t.Logf`, `t.Errorf`, `t.Fatalf`, `t.Run`, `t.Parallel`, `t.Cleanup`, `t.TempDir`, `t.Setenv`, `b.ResetTimer`, `b.ReportAllocs`).
+- **Snippets Avanzados**:
+  - `test-go`: Esqueleto de test Go-style (`Test*(t: *testing.T)`).
+  - `test-table`: Suite de pruebas table-driven con subtests paralelos (`t.Run`, `t.Parallel`).
+  - `bench-go`: Benchmark con control de asignaciones (`b.ReportAllocs()`) y bucle `b.N`.
+  - `example`: Funciones con validación de salida documentada (`// Output:`).
+  - `db-pg`, `db-mysql`, `redis-client`, `mongo-client`: Clientes de persistencia con conexión, consulta y defer cleanup.
+  - `csp-worker-pool`: Pipeline concurrente de workers con fibras, canales y `WaitGroup`.
+
+### 1.4 Test Controller, CodeLens y Ejecución de Pruebas (`src/testController.ts`, `src/codeLens.ts`)
 - **Descubrimiento Inteligente**: Detecta archivos `*_test.aura` y funciones `@test`, `@bench`, `test_*`, `Test*`, `benchmark_*`, distinguiendo pruebas unitarias (`🧪`) de benchmarks de rendimiento (`⚡`).
 - **CodeLens Interactivo**: Muestra `Run File Tests` al inicio del archivo y botones individuales `Run Test` / `Run Benchmark` sobre cada función de prueba para ejecución focalizada con `-run` y `-bench`.
 - **Ejecución Inteligente de Archivos**: Detecta automáticamente si el archivo activo es `*_test.aura` y lo ejecuta con `auratest -v` en lugar de `aurac run`. Incluye acciones en la barra de herramientas del editor y menú contextual.
 - **Perfil de Ejecución con Cobertura**: Ejecuta pruebas con análisis de cobertura en un solo clic (`auratest -cover`).
 - **Resistencia**: Manejo robusto de comentarios, decoradores y líneas en blanco sin perder asociaciones de funciones.
 
-### 1.4 Tareas Preconfiguradas (`src/taskProvider.ts`)
+### 1.5 Tareas Preconfiguradas (`src/taskProvider.ts`)
 Accesibles desde **Terminal > Run Task...**:
 1. **Build Standalone Native Binary (Cranelift)**: Compilación nativa directa a código de máquina.
 2. **Build Release Standalone Binary (-O3, SIMD)**: Binario optimizado para máxima velocidad y strip de símbolos.
@@ -195,13 +208,13 @@ Accesibles desde **Terminal > Run Task...**:
 12. **Format Workspace (aurafmt -w .)**: Formateo estandarizado de todo el proyecto.
 13. **Module Tidy / Verify / Vendor**: Gestión completa de dependencias de `aura.mod` y verificación criptográfica de `aura.lock`.
 
-### 1.5 Explorador Interactivo de Dependencias (`src/dependencyExplorer.ts`)
+### 1.6 Explorador Interactivo de Dependencias (`src/dependencyExplorer.ts`)
 - Muestra el nombre del módulo y la versión de Aura.
 - **Navegación al Hacer Clic**: Al hacer clic en un módulo o dependencia, salta directamente a la línea correspondiente en `aura.mod`.
 - Al hacer clic en `aura.lock`, abre el archivo de bloqueo criptográfico con hashes SHA-256.
 - Lista dependencias declaradas en `require (...)` indicando con un icono de seguridad si el hash SHA-256 está verificado en `aura.lock`.
 
-### 1.6 Previsualización OpenAPI / Swagger (`src/swaggerPreview.ts`)
+### 1.7 Previsualización OpenAPI / Swagger (`src/swaggerPreview.ts`)
 - Permite abrir un panel Webview interactivo (`vscode.ViewColumn.Beside`) apuntando a `http://127.0.0.1:<port>/swagger` para explorar y probar rutas HTTP y microservicios Aura en vivo.
 
 ---
@@ -273,9 +286,12 @@ Para una integración rápida en un solo archivo sin gestor de plugins, también
 
 | Característica | VS Code | Antigravity IDE | Zed Editor | Neovim |
 | :--- | :---: | :---: | :---: | :---: |
-| **Language Server Protocol (`auralsp` / `aurac lsp`)** | ✅ Sí | ✅ Sí | ✅ Sí | ✅ Sí (Nativo / lspconfig) |
+| **Language Server Protocol (`auralsp` / `aurac lsp` / `aura lsp`)** | ✅ Sí | ✅ Sí | ✅ Sí | ✅ Sí (Nativo / lspconfig) |
+| **Autocompletado Contextual (`AuraCompletionItemProvider`)** | ✅ Sí (Rico + Stdlib) | ✅ Sí (Rico + Stdlib) | Vía LSP | Vía LSP / Snippets |
+| **Ayuda de Firmas en Vivo (`SignatureHelpProvider`)** | ✅ Sí (`(`, `,`) | ✅ Sí (`(`, `,`) | Vía LSP | Vía LSP (`<C-k>`) |
 | **Hover Enriquecido con Catálogo Estándar** | ✅ Sí | ✅ Sí | Vía LSP | Vía LSP |
 | **Go To Definition (`F12` / `gd`)** | ✅ Sí (Multi-archivo) | ✅ Sí (Multi-archivo) | ✅ Sí | ✅ Sí |
+| **Snippets Go-Style Testing y Persistencia** | ✅ Sí (`snippets/aura.json`) | ✅ Sí (`snippets/aura.json`) | Vía LSP | ✅ Sí (`aura.snippets`) |
 | **Depuración con Breakpoints & Source Maps** | ✅ Sí (`pwa-node`) | ✅ Sí (`pwa-node`) | ✅ Sí (DAP / V8) | Vía nvim-dap |
 | **Depuración Paso a Paso en Terminal (`aurac step`)** | ✅ Sí | ✅ Sí | ✅ Sí (Tarea) | ✅ Sí (`:AuraStep`) |
 | **Test Explorer & Benchmarks** | ✅ Sí (Nativo) | ✅ Sí (Nativo) | Vía Tareas | Vía Comandos |
@@ -293,6 +309,32 @@ Para una integración rápida en un solo archivo sin gestor de plugins, también
 
 ---
 
+## 📦 Instalador Unificado de Extensiones (`install.sh`)
+
+El monorepo cuenta con un script de instalación automatizado que detecta tus editores instalados, compila los artefactos necesarios (`.vsix` para VS Code/Antigravity, `.wasm` para Zed) y los instala directamente en tu entorno:
+
+```bash
+# Instalación automática en todos los editores detectados (VS Code, Antigravity, Zed, Neovim)
+./install.sh
+
+# O mediante npm:
+npm run install:all
+
+# Opciones por editor específico:
+./install.sh --vscode         # Solo Visual Studio Code
+./install.sh --antigravity    # Solo Google Antigravity IDE
+./install.sh --zed            # Solo Zed Editor
+./install.sh --nvim           # Solo Neovim
+
+# Modo empaquetado (sin instalar en los editores):
+./install.sh --build-only
+
+# Modo desarrollo con enlaces simbólicos (Zed y Neovim):
+./install.sh --dev-link
+```
+
+---
+
 ## 🛠️ Comandos Globales del Monorepo
 
 Desde la raíz del repositorio puedes ejecutar:
@@ -306,6 +348,9 @@ npm run check:all
 
 # Empaquetar artefactos VSIX para distribución
 npm run package:all
+
+# Instalar extensiones en los editores locales
+npm run install:all
 ```
 
 ---

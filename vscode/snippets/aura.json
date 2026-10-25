@@ -326,5 +326,153 @@
       "}"
     ],
     "description": "Define an auratest benchmark performance test"
+  },
+  "Go-Style Test Function": {
+    "prefix": "test-go",
+    "body": [
+      "fn Test${1:Feature}(t: *testing.T) => {",
+      "\tt.Helper();",
+      "\tlet got = ${2:call()};",
+      "\tlet want = ${3:expected};",
+      "\tif (got != want) {",
+      "\t\tt.Errorf(\"${1:Feature}() = %v, want %v\", got, want);",
+      "\t}",
+      "}"
+    ],
+    "description": "Define a Go-style test function with *testing.T, t.Errorf, t.Fatalf"
+  },
+  "Go-Style Table Driven Test": {
+    "prefix": "test-table",
+    "body": [
+      "fn Test${1:Feature}TableDriven(t: *testing.T) => {",
+      "\tlet tests = [",
+      "\t\t{ name: \"${2:case1}\", input: ${3:value}, want: ${4:expected} },",
+      "\t];",
+      "",
+      "\tfor tc in tests {",
+      "\t\tt.Run(tc.name, fn(t: *testing.T) => {",
+      "\t\t\tt.Parallel();",
+      "\t\t\tlet got = ${5:call(tc.input)};",
+      "\t\t\tif (got != tc.want) {",
+      "\t\t\tt.Fatalf(\"got %v, want %v\", got, tc.want);",
+      "\t\t\t}",
+      "\t\t});",
+      "\t}",
+      "}"
+    ],
+    "description": "Go-style Table-Driven test suite using t.Run and t.Parallel"
+  },
+  "Go-Style Benchmark": {
+    "prefix": "bench-go",
+    "body": [
+      "fn Benchmark${1:Operation}(b: *testing.B) => {",
+      "\tb.ReportAllocs();",
+      "\tb.ResetTimer();",
+      "\tfor (let mut i = 0; i < b.N; i = i + 1) {",
+      "\t\t${2:Operation()};",
+      "\t}",
+      "}"
+    ],
+    "description": "Go-style benchmark using *testing.B, b.ResetTimer and b.N loop"
+  },
+  "Go-Style Example Function": {
+    "prefix": "example",
+    "body": [
+      "fn Example${1:Feature}() => {",
+      "\tprintln(${2:call()});",
+      "\t// Output:",
+      "\t// ${3:expected_output}",
+      "}"
+    ],
+    "description": "Go-style test example function with verified // Output:"
+  },
+  "PostgreSQL Connection Pool": {
+    "prefix": "db-pg",
+    "body": [
+      "import { connect } from \"pg\";",
+      "",
+      "let db = pg.connect(\"postgres://${1:user}:${2:password}@${3:localhost}:5432/${4:mydb}?sslmode=disable\")?;",
+      "defer db.close();",
+      "",
+      "let rows = db.query(\"SELECT id, name FROM users WHERE active = $1\", [true])?;",
+      "defer rows.close();",
+      "",
+      "for row in rows {",
+      "\tprintln(`User: ${row.id} - ${row.name}`);",
+      "}"
+    ],
+    "description": "Native PostgreSQL database connection, query and iteration"
+  },
+  "MySQL Database Connection": {
+    "prefix": "db-mysql",
+    "body": [
+      "import { connect } from \"mysql\";",
+      "",
+      "let db = mysql.connect(\"${1:user}:${2:password}@tcp(${3:localhost}:3306)/${4:mydb}\")?;",
+      "defer db.close();",
+      "",
+      "let rows = db.query(\"SELECT id, title FROM items\")?;",
+      "defer rows.close();"
+    ],
+    "description": "Native MySQL connection pool and query"
+  },
+  "Redis Cache Client": {
+    "prefix": "redis-client",
+    "body": [
+      "import { connect } from \"redis\";",
+      "",
+      "let rdb = redis.connect(\"redis://${1:localhost}:6379\")?;",
+      "defer rdb.close();",
+      "",
+      "rdb.set(\"${2:key}\", \"${3:value}\", 3600);",
+      "let val = rdb.get(\"${2:key}\");",
+      "println(`Redis val: ${val}`);"
+    ],
+    "description": "Native Redis connection with set, get and expiration"
+  },
+  "MongoDB Client": {
+    "prefix": "mongo-client",
+    "body": [
+      "import { connect } from \"mongo\";",
+      "",
+      "let client = mongo.connect(\"mongodb://${1:localhost}:27017\")?;",
+      "defer client.close();",
+      "",
+      "let col = client.database(\"${2:mydb}\").collection(\"${3:users}\");",
+      "col.insertOne({ name: \"${4:Alice}\", role: \"admin\" });"
+    ],
+    "description": "Native MongoDB client with collection operations"
+  },
+  "CSP Worker Pool": {
+    "prefix": "csp-worker-pool",
+    "body": [
+      "import { WaitGroup } from \"sync\";",
+      "",
+      "let jobs = Channel.new<Int>(100);",
+      "let results = Channel.new<Int>(100);",
+      "let wg = WaitGroup.new();",
+      "",
+      "// Spawn worker fibers",
+      "for w in 1..=${1:4} {",
+      "\twg.add(1);",
+      "\tspawn {",
+      "\t\tdefer wg.done();",
+      "\t\tfor j in jobs {",
+      "\t\t\tresults <- (j * 2);",
+      "\t\t}",
+      "\t};",
+      "}",
+      "",
+      "// Send jobs and close channel",
+      "spawn {",
+      "\tfor j in 1..=${2:10} {",
+      "\t\tjobs <- j;",
+      "\t}",
+      "\tjobs.close();",
+      "\twg.wait();",
+      "\tresults.close();",
+      "};"
+    ],
+    "description": "High-throughput CSP worker pool with M:N fibers and WaitGroup"
   }
 }
